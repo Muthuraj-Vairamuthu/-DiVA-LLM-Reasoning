@@ -1,0 +1,50 @@
+{"id": "strategyqa_0", "dataset": "strategyqa", "question": "Is Mixed martial arts totally original from Roman Colosseum games?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_1", "dataset": "strategyqa", "question": "Is the cuisine of Hawaii suitable for a vegan?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_2", "dataset": "strategyqa", "question": "Is capturing giant squid in natural habitat impossible with no gear?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_3", "dataset": "strategyqa", "question": "Did the Royal Air Force fight in the Boxer Rebellion?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_4", "dataset": "strategyqa", "question": "Would someone in Mumbai refer to Solanum melongena as an eggplant?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_5", "dataset": "strategyqa", "question": "Do flying fish have good eyesight?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_6", "dataset": "strategyqa", "question": "If someone is a vegan, would they eat honey?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_7", "dataset": "strategyqa", "question": "Can the Great Depression be treated with Prozac?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_8", "dataset": "strategyqa", "question": "Does Santa Claus work during summer?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_9", "dataset": "strategyqa", "question": "Has categories of Nobel prizes remained same since Alfred Nobel established them?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_10", "dataset": "strategyqa", "question": "Does a Starbucks passion tea have ginger in it?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_11", "dataset": "strategyqa", "question": "Would Kurt Cobain have benefited from Project Semicolon?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_12", "dataset": "strategyqa", "question": "Could you buy Hershey's Kisses in red foil with farthings after 1960?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_13", "dataset": "strategyqa", "question": "Is electricity necessary to balance an account in Microsoft Excel?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_14", "dataset": "strategyqa", "question": "Is a pound sterling valuable?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_15", "dataset": "strategyqa", "question": "Can an African Elephant get pregnant twice in a year?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_16", "dataset": "strategyqa", "question": "Would the host of The Colbert Report be likely to vote for Trump?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_17", "dataset": "strategyqa", "question": "Does Coast to Coast AM have more longevity than the Rush Limbaugh show?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_18", "dataset": "strategyqa", "question": "Is the foot part of the metric system?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_19", "dataset": "strategyqa", "question": "In baseball, is a \"Homer\" named after the poet Homer who wrote the Odyssey?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_20", "dataset": "strategyqa", "question": "Could Casio's first invention be worn around the ankle?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_21", "dataset": "strategyqa", "question": "Did Richard III know his grandson?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_22", "dataset": "strategyqa", "question": "Would a Fakir be surprised if they saw a comma in their religious book?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_23", "dataset": "strategyqa", "question": "Is the name of a mythical creature also the name of a Small Solar System body?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_24", "dataset": "strategyqa", "question": "Can Kit & Kaboodle hypothetically help someone past the Underworld gates?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_25", "dataset": "strategyqa", "question": "Was Walt Disney able to email his illustrations to people living far away?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_26", "dataset": "strategyqa", "question": "Is a felony jury enough people for a Bunco game?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_27", "dataset": "strategyqa", "question": "Could Godzilla have been killed by the Tohoku earthquake?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_28", "dataset": "strategyqa", "question": "Is Alan Alda old enough to have fought in the Vietnam War?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_29", "dataset": "strategyqa", "question": "Does acupuncture cause pain in many people?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_30", "dataset": "strategyqa", "question": "Is Newt Gingrich's nickname a type of Reptile?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_31", "dataset": "strategyqa", "question": "Can people die from brake failure?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_32", "dataset": "strategyqa", "question": "Is Europa linked to Viennese waltzes?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_33", "dataset": "strategyqa", "question": "Would a Dolce & Gabbana suit wearer be shunned by their Amish cousins?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_34", "dataset": "strategyqa", "question": "Could the members of The Police perform lawful arrests?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_35", "dataset": "strategyqa", "question": "Will twenty pea pods contents cover entire chess board?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_36", "dataset": "strategyqa", "question": "Would it be hard to get toilet paper if there were no loggers?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_37", "dataset": "strategyqa", "question": "Did Linnaeus edit Darwin's draft of Origin of Species?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_38", "dataset": "strategyqa", "question": "Did Disney's second film rip off a prophet story?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_39", "dataset": "strategyqa", "question": "Is Rurouni Kenshin from same country as lead character in Nobunaga's Ambition?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_40", "dataset": "strategyqa", "question": "Is the Gujarati script the same category of script as Kanji?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_41", "dataset": "strategyqa", "question": "Would a broadcast from Spirit make the news in 2020?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_42", "dataset": "strategyqa", "question": "Was Saudi Aramco started due to an assassination?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_43", "dataset": "strategyqa", "question": "Is the span in C-SPAN named after Alan Greenspan?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_44", "dataset": "strategyqa", "question": "Is \"A Tale of Two Cities\" a parody of the Bible?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_45", "dataset": "strategyqa", "question": "Was disc jockey Jay Thomas enemies with Clayton Moore?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_46", "dataset": "strategyqa", "question": "Is the Flying Spaghetti Monster part of an ancient pantheon?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_47", "dataset": "strategyqa", "question": "Are lengths measured in metres in the UK?", "gold_answer": "true", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_48", "dataset": "strategyqa", "question": "Would a Germaphobia be able to participate in Judo?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
+{"id": "strategyqa_49", "dataset": "strategyqa", "question": "Could Eddie Hall hypothetically deadlift the world's largest cheeseburger?", "gold_answer": "false", "task_type": "commonsense", "is_ambiguous": false}
