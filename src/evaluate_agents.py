@@ -4,14 +4,18 @@ import csv
 from collections import Counter, defaultdict
 from pathlib import Path
 
-INPUT_PATH = Path("outputs/gsm8k_agents_50.jsonl")
+import os
+
+DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
+
+INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_50.jsonl")
 
 RESULTS_DIR = Path("results")
-SUMMARY_CSV = RESULTS_DIR / "gsm8k_summary.csv"
-DISAGREEMENT_CSV = RESULTS_DIR / "gsm8k_disagreement_summary.csv"
-AGENT_CSV = RESULTS_DIR / "gsm8k_agent_summary.csv"
-FAILED_MAJORITY_JSONL = RESULTS_DIR / "gsm8k_failed_majority_cases.jsonl"
-OVERCONFIDENT_ERRORS_JSONL = RESULTS_DIR / "gsm8k_overconfident_error_cases.jsonl"
+SUMMARY_CSV = RESULTS_DIR / f"{DATASET_NAME}_summary.csv"
+DISAGREEMENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_disagreement_summary.csv"
+AGENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_agent_summary.csv"
+FAILED_MAJORITY_JSONL = RESULTS_DIR / f"{DATASET_NAME}_failed_majority_cases.jsonl"
+OVERCONFIDENT_ERRORS_JSONL = RESULTS_DIR / f"{DATASET_NAME}_overconfident_error_cases.jsonl"
 
 AGENTS = ["literal", "skeptic", "creative", "evidence"]
 PRIORITY_AGENTS = ["evidence", "literal", "creative", "skeptic"]
@@ -20,23 +24,104 @@ OVERCONFIDENCE_THRESHOLD = 0.8
 
 
 def normalize_answer(ans):
+    """
+    Robust answer normalization for:
+    1. GSM8K numeric answers
+    2. StrategyQA yes/no or true/false answers
+    3. Messy model outputs like:
+       "Final answer: yes"
+       "The answer is no"
+       "0"
+       "1"
+       "400 ml"
+       "$990.00"
+    """
     if ans is None:
         return ""
 
-    ans = str(ans).lower().strip()
-    ans = ans.replace("$", "").replace(",", "")
+    text = str(ans).lower().strip()
 
-    match = re.search(r"-?\d+\.?\d*", ans)
+    if text == "":
+        return ""
 
-    if match:
-        num = float(match.group())
+    text = text.replace("\n", " ")
+    text = text.replace("$", "")
+    text = text.replace(",", "")
+    text = text.strip()
+
+    # Remove common final answer prefixes
+    prefixes = [
+        "final answer:",
+        "answer:",
+        "the answer is",
+        "therefore, the answer is",
+        "so the answer is",
+        "thus, the answer is"
+    ]
+
+    for prefix in prefixes:
+        if text.startswith(prefix):
+            text = text.replace(prefix, "", 1).strip()
+
+    # Clean surrounding punctuation
+    cleaned = text.strip().strip(".").strip()
+
+    # Boolean normalization
+    true_patterns = {
+        "true",
+        "yes",
+        "y",
+        "1",
+        "correct"
+    }
+
+    false_patterns = {
+        "false",
+        "no",
+        "n",
+        "0",
+        "incorrect"
+    }
+
+    if cleaned in true_patterns:
+        return "true"
+
+    if cleaned in false_patterns:
+        return "false"
+
+    # Handle sentence style boolean answers
+    if re.search(r"\b(final answer|answer)\s*:\s*(yes|true)\b", text):
+        return "true"
+
+    if re.search(r"\b(final answer|answer)\s*:\s*(no|false)\b", text):
+        return "false"
+
+    if re.search(r"\bthe answer is\s+(yes|true)\b", text):
+        return "true"
+
+    if re.search(r"\bthe answer is\s+(no|false)\b", text):
+        return "false"
+
+    # If the whole answer starts with yes/no, treat it as boolean
+    if re.match(r"^(yes|true)\b", cleaned):
+        return "true"
+
+    if re.match(r"^(no|false)\b", cleaned):
+        return "false"
+
+    # Numeric normalization for GSM8K and numeric outputs
+    number_matches = re.findall(r"-?\d+\.?\d*", cleaned)
+
+    if number_matches:
+        # Prefer the last number because models often end with the final answer
+        num = float(number_matches[-1])
 
         if num.is_integer():
             return str(int(num))
 
         return str(num)
 
-    return ans.strip()
+    return cleaned
 
 
 def extract_gold_answer(gold_text):

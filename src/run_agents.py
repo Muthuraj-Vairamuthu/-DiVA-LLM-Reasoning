@@ -9,11 +9,12 @@ from llm_clients import NIMClient
 from dotenv import load_dotenv
 load_dotenv()
 
+DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
 
-DATA_PATH = Path("data/gsm8k_50.jsonl")
+DATA_PATH = Path(f"data/{DATASET_NAME}_50.jsonl")
 PROMPT_DIR = Path("prompts")
 OUTPUT_DIR = Path("outputs")
-OUTPUT_PATH = OUTPUT_DIR / "gsm8k_agents_50.jsonl"
+OUTPUT_PATH = OUTPUT_DIR / f"{DATASET_NAME}_agents_50.jsonl"
 
 MODEL_NAME = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
 NUM_SAMPLES = 50
@@ -44,14 +45,14 @@ def load_prompt(agent_name):
 
 
 def extract_final_answer(response_text):
-    match = re.search(
+    matches = re.findall(
         r"Final Answer:\s*(.*)",
         response_text,
         re.IGNORECASE
     )
 
-    if match:
-        return match.group(1).strip()
+    if matches:
+        return matches[-1].strip()
 
     return ""
 
@@ -84,10 +85,43 @@ def extract_uncertainty(response_text):
 
     return ""
 
+def get_task_instruction(dataset_name):
+    if dataset_name == "strategyqa":
+        return """
+Dataset specific instruction:
+This is a yes/no commonsense reasoning question.
+
+Your Final Answer must be exactly one of:
+yes
+no
+
+Do not write maybe, unknown, unclear, a number, or a full sentence in the Final Answer field.
+Do not put confidence or explanation inside the Final Answer field.
+"""
+
+    if dataset_name == "gsm8k":
+        return """
+Dataset specific instruction:
+This is a math word problem.
+
+Your Final Answer must contain only the final numeric answer.
+Do not include units, explanation, equations, or a full sentence in the Final Answer field.
+"""
+
+    return """
+Dataset specific instruction:
+Follow the answer format required by the task.
+Keep the Final Answer short and exact.
+"""
+
 
 def call_agent(question, agent_name, prompt_text):
+    task_instruction = get_task_instruction(DATASET_NAME)
+
     full_prompt = f"""
 {prompt_text}
+
+{task_instruction}
 
 Question:
 {question}
@@ -96,7 +130,7 @@ Question:
     response_text = client.generate(
         prompt=full_prompt,
         temperature=0.3,
-        max_tokens=512
+        max_tokens=256
     ).strip()
 
     return {
@@ -132,13 +166,13 @@ def main():
             print(f"Running sample {index + 1}/{NUM_SAMPLES}: {sample['id']}")
 
             result = {
-                "id": sample["id"],
-                "dataset": "gsm8k",
-                "question": sample["question"],
-                "gold_answer": sample["answer"],
-                "model": MODEL_NAME,
-                "agents": {}
-            }
+    "id": sample["id"],
+    "dataset": sample.get("dataset", DATASET_NAME),
+    "question": sample["question"],
+    "gold_answer": sample.get("answer", sample.get("gold_answer")),
+    "model": MODEL_NAME,
+    "agents": {}
+}
 
             for agent_name in agent_names:
                 print(f"Calling {agent_name} agent")
@@ -151,7 +185,7 @@ def main():
 
                 result["agents"][agent_name] = agent_output
 
-                time.sleep(0.5)
+                time.sleep(3)
 
             output_file.write(
                 json.dumps(result, ensure_ascii=False) + "\n"

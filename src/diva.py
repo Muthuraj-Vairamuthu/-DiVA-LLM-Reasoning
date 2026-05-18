@@ -8,8 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-INPUT_PATH = Path("outputs/gsm8k_agents_50.jsonl")
-OUTPUT_PATH = Path("outputs/gsm8k_diva_50.jsonl")
+DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
+
+INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_50.jsonl")
+OUTPUT_PATH = Path(f"outputs/{DATASET_NAME}_diva_50.jsonl")
 META_JUDGE_PROMPT_PATH = Path("prompts/meta_judge.txt")
 MODEL_NAME = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
 
@@ -28,21 +30,82 @@ def normalize_answer(ans):
     if ans is None:
         return ""
 
-    ans = str(ans).lower().strip()
-    ans = ans.replace("$", "").replace(",", "")
+    text = str(ans).lower().strip()
 
-    match = re.search(r"-?\d+\.?\d*", ans)
+    if text == "":
+        return ""
 
-    if match:
-        num = float(match.group())
+    text = text.replace("\n", " ")
+    text = text.replace("$", "")
+    text = text.replace(",", "")
+    text = text.strip()
+
+    prefixes = [
+        "final answer:",
+        "answer:",
+        "the answer is",
+        "therefore, the answer is",
+        "so the answer is",
+        "thus, the answer is"
+    ]
+
+    for prefix in prefixes:
+        if text.startswith(prefix):
+            text = text.replace(prefix, "", 1).strip()
+
+    cleaned = text.strip().strip(".").strip()
+
+    true_patterns = {
+        "true",
+        "yes",
+        "y",
+        "1",
+        "correct"
+    }
+
+    false_patterns = {
+        "false",
+        "no",
+        "n",
+        "0",
+        "incorrect"
+    }
+
+    if cleaned in true_patterns:
+        return "true"
+
+    if cleaned in false_patterns:
+        return "false"
+
+    if re.search(r"\b(final answer|answer)\s*:\s*(yes|true)\b", text):
+        return "true"
+
+    if re.search(r"\b(final answer|answer)\s*:\s*(no|false)\b", text):
+        return "false"
+
+    if re.search(r"\bthe answer is\s+(yes|true)\b", text):
+        return "true"
+
+    if re.search(r"\bthe answer is\s+(no|false)\b", text):
+        return "false"
+
+    if re.match(r"^(yes|true)\b", cleaned):
+        return "true"
+
+    if re.match(r"^(no|false)\b", cleaned):
+        return "false"
+
+    number_matches = re.findall(r"-?\d+\.?\d*", cleaned)
+
+    if number_matches:
+        num = float(number_matches[-1])
 
         if num.is_integer():
             return str(int(num))
 
         return str(num)
 
-    return ans.strip()
-
+    return cleaned
 
 def extract_gold_answer(gold_text):
     match = re.search(r"####\s*(.*)", gold_text)
@@ -83,8 +146,14 @@ def get_majority_answer(answers):
     priority_agents = ["evidence", "literal", "creative", "skeptic"]
 
     for agent in priority_agents:
-        if answers[agent] in candidates:
-            return answers[agent], max_count
+        agent_answer = answers.get(agent, "")
+
+        if agent_answer in candidates and agent_answer != "":
+            return agent_answer, max_count
+
+    for candidate in candidates:
+        if candidate != "":
+            return candidate, max_count
 
     return candidates[0], max_count
 
@@ -143,6 +212,19 @@ Evidence Agent Response:
 
     judge_output = extract_json_from_text(response_text)
 
+    selected_answer = normalize_answer(judge_output.get("selected_answer", ""))
+    abstain = bool(judge_output.get("abstain", False))
+
+    try:
+        confidence = float(judge_output.get("confidence", 0.0))
+    except Exception:
+        confidence = 0.0
+
+    confidence = max(0.0, min(1.0, confidence))
+
+    if abstain:
+        selected_answer = ""
+
     return {
         "selected_answer": normalize_answer(judge_output.get("selected_answer", "")),
         "abstain": bool(judge_output.get("abstain", False)),
@@ -153,18 +235,11 @@ Evidence Agent Response:
         "selected_source": judge_output.get("selected_source", "")
     }
 
-
-
-
 def diva_decision(question, answers, confidences, agent_responses):
     counts = Counter(answers.values())
     disagreement = classify_disagreement(counts)
 
     majority_answer, majority_count = get_majority_answer(answers)
-
-    evidence_answer = answers["evidence"]
-    literal_answer = answers["literal"]
-    evidence_conf = confidences["evidence"]
 
     decision = {
         "selected_answer": None,
@@ -179,7 +254,7 @@ def diva_decision(question, answers, confidences, agent_responses):
     if disagreement == "none":
         decision["selected_answer"] = majority_answer
         decision["confidence"] = 0.95
-        decision["strategy"] = "majority_vote"
+        decision["strategy"] = "unanimous_majority"
         decision["selected_source"] = "majority"
         decision["reason"] = "All agents agree, so the answer is treated as reliable."
         return decision
@@ -187,28 +262,12 @@ def diva_decision(question, answers, confidences, agent_responses):
     if disagreement == "weak":
         decision["selected_answer"] = majority_answer
         decision["confidence"] = 0.85
-        decision["strategy"] = "majority_vote"
+        decision["strategy"] = "weak_majority"
         decision["selected_source"] = "majority"
-        decision["reason"] = "Three agents agree, so majority voting is trusted."
+        decision["reason"] = "Three agents agree, so majority voting is used."
         return decision
 
     if disagreement == "strong":
-        if counts[evidence_answer] == majority_count:
-            decision["selected_answer"] = evidence_answer
-            decision["confidence"] = 0.75
-            decision["strategy"] = "evidence_supported_majority"
-            decision["selected_source"] = "evidence"
-            decision["reason"] = "There is strong disagreement, but the Evidence Agent supports the majority answer."
-            return decision
-
-        if evidence_answer == literal_answer and evidence_conf >= 0.80:
-            decision["selected_answer"] = evidence_answer
-            decision["confidence"] = 0.70
-            decision["strategy"] = "literal_evidence_agreement"
-            decision["selected_source"] = "literal_evidence"
-            decision["reason"] = "There is strong disagreement, but Literal and Evidence Agents agree with sufficient confidence."
-            return decision
-
         decision["selected_answer"] = majority_answer
         decision["confidence"] = 0.60
         decision["strategy"] = "low_confidence_majority"
@@ -217,10 +276,13 @@ def diva_decision(question, answers, confidences, agent_responses):
         return decision
 
     if disagreement == "complete":
-        return call_meta_judge(
+        judge_decision = call_meta_judge(
             question=question,
             agent_responses=agent_responses
         )
+        judge_decision["disagreement_type"] = disagreement
+        judge_decision["strategy"] = "meta_judge_on_complete_disagreement"
+        return judge_decision
 
     decision["selected_answer"] = majority_answer
     decision["confidence"] = 0.50
@@ -228,7 +290,6 @@ def diva_decision(question, answers, confidences, agent_responses):
     decision["selected_source"] = "majority"
     decision["reason"] = "Fallback decision."
     return decision
-
 
 def load_rows(path):
     rows = []

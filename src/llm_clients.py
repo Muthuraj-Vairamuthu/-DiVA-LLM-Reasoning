@@ -31,7 +31,7 @@ class NIMClient:
         system: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        max_retries: int = 3,
+        max_retries: int = 6,
     ) -> str:
         temp = self.temperature if temperature is None else temperature
         mtok = self.max_tokens if max_tokens is None else max_tokens
@@ -75,6 +75,11 @@ class NIMClient:
                 if response.status_code == 429:
                     wait = 2 ** attempt
                     print(f"Rate limited. Retrying in {wait} seconds.")
+                    time.sleep(wait)
+                    continue
+                if response.status_code in [500, 502, 503, 504]:
+                    wait = 2 ** attempt
+                    print(f"NIM server error {response.status_code}. Retrying in {wait} seconds.")
                     time.sleep(wait)
                     continue
 
