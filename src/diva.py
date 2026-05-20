@@ -167,6 +167,17 @@ def normalize_answer(ans):
     return cleaned
 
 def extract_gold_answer(gold_text):
+    if isinstance(gold_text, list):
+        return [
+            normalize_answer(x)
+            for x in gold_text
+            if str(x).strip()
+        ]
+
+    if gold_text is None:
+        return ""
+
+    gold_text = str(gold_text)
     match = re.search(r"####\s*(.*)", gold_text)
 
     if match:
@@ -177,16 +188,25 @@ def extract_gold_answer(gold_text):
 
 def get_gold_spec(row):
     if row.get("dataset") == "ambigqa":
+        extracted = extract_gold_answer(row.get("gold_answer"))
         is_ambiguous = bool(row.get("is_ambiguous", False))
-        acceptable_answers = [
-            normalize_answer(answer)
-            for answer in row.get("acceptable_answers", [])
-        ]
-        acceptable_answers = [
-            answer
-            for answer in acceptable_answers
-            if answer != ""
-        ]
+
+        if isinstance(extracted, list):
+            acceptable_answers = [
+                answer
+                for answer in extracted
+                if answer != ""
+            ]
+        else:
+            acceptable_answers = [
+                normalize_answer(answer)
+                for answer in row.get("acceptable_answers", [])
+            ]
+            acceptable_answers = [
+                answer
+                for answer in acceptable_answers
+                if answer != ""
+            ]
 
         if is_ambiguous:
             return "", acceptable_answers, True
@@ -650,6 +670,10 @@ def main():
     diva_answered = 0
     diva_abstained = 0
     diva_correct_total_style = 0
+    ambiguous_total = 0
+    answerable_total = 0
+    diva_correct_abstentions = 0
+    diva_wrong_abstentions = 0
 
     abstained_on_majority_wrong = 0
     abstained_on_majority_correct = 0
@@ -657,6 +681,11 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as output_file:
         for row in rows:
             gold_answer, acceptable_answers, is_ambiguous = get_gold_spec(row)
+
+            if is_ambiguous:
+                ambiguous_total += 1
+            else:
+                answerable_total += 1
 
             answers = {}
             confidences = {}
@@ -669,7 +698,12 @@ def main():
                 agent_responses[agent] = agent_data.get("response", "")
 
             majority_answer, majority_count = get_majority_answer(answers)
-            majority_is_correct = majority_answer == gold_answer
+            majority_is_correct = is_correct_answer(
+                majority_answer,
+                gold_answer,
+                acceptable_answers,
+                is_ambiguous
+            )
 
             if majority_is_correct:
                 majority_correct += 1
@@ -690,6 +724,12 @@ def main():
 
             if decision["abstain"]:
                 diva_abstained += 1
+
+                if diva_is_correct:
+                    diva_correct_abstentions += 1
+                    diva_correct_total_style += 1
+                else:
+                    diva_wrong_abstentions += 1
 
                 if majority_is_correct:
                     abstained_on_majority_correct += 1
@@ -717,7 +757,7 @@ def main():
                 "majority_correct": majority_is_correct,
                 "diva": {
                     "selected_answer": selected_answer,
-                    "correct": diva_is_correct if not decision["abstain"] else None,
+                    "correct": diva_is_correct,
                     "abstain": decision["abstain"],
                     "confidence": decision["confidence"],
                     "disagreement_type": decision["disagreement_type"],
@@ -738,6 +778,15 @@ def main():
     diva_coverage = diva_answered / total
     diva_abstention_rate = diva_abstained / total
     diva_total_accuracy_counting_abstain_wrong = diva_correct_total_style / total
+    diva_ambiguity_aware_accuracy = diva_correct_total_style / total
+    diva_correct_abstention_rate = (
+        diva_correct_abstentions / ambiguous_total
+        if ambiguous_total > 0 else 0.0
+    )
+    diva_wrong_abstention_rate = (
+        diva_wrong_abstentions / answerable_total
+        if answerable_total > 0 else 0.0
+    )
 
     print("\n==============================")
     print("DiVA RULE BASED EVALUATION")
@@ -755,6 +804,16 @@ def main():
     print(f"Abstained: {diva_abstained}/{total} = {diva_abstention_rate:.2%}")
     print(f"Selective accuracy on answered samples: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
     print(f"Accuracy if abstentions are counted as wrong: {diva_correct_total_style}/{total} = {diva_total_accuracy_counting_abstain_wrong:.2%}")
+
+    if DATASET_NAME == "ambigqa":
+        print("\nAmbiguity Metrics")
+        print(f"Ambiguous questions: {ambiguous_total}/{total} = {ambiguous_total / total:.2%}")
+        print(f"Answerable questions: {answerable_total}/{total} = {answerable_total / total:.2%}")
+        print(f"Correct abstentions: {diva_correct_abstentions}/{ambiguous_total} = {diva_correct_abstention_rate:.2%}")
+        print(f"Wrong abstentions: {diva_wrong_abstentions}/{answerable_total} = {diva_wrong_abstention_rate:.2%}")
+        print(f"Answered accuracy: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
+        print(f"Coverage: {diva_answered}/{total} = {diva_coverage:.2%}")
+        print(f"Ambiguity-aware accuracy: {diva_correct_total_style}/{total} = {diva_ambiguity_aware_accuracy:.2%}")
 
     print("\nAbstention Analysis")
     print(f"Abstained when majority was wrong: {abstained_on_majority_wrong}")

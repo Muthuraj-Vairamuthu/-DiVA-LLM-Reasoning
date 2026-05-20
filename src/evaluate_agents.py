@@ -151,6 +151,17 @@ def normalize_answer(ans):
 
 
 def extract_gold_answer(gold_text):
+    if isinstance(gold_text, list):
+        return [
+            normalize_answer(x)
+            for x in gold_text
+            if str(x).strip()
+        ]
+
+    if gold_text is None:
+        return ""
+
+    gold_text = str(gold_text)
     match = re.search(r"####\s*(.*)", gold_text)
 
     if match:
@@ -161,16 +172,25 @@ def extract_gold_answer(gold_text):
 
 def get_gold_spec(row):
     if row.get("dataset") == "ambigqa":
+        extracted = extract_gold_answer(row.get("gold_answer"))
         is_ambiguous = bool(row.get("is_ambiguous", False))
-        acceptable_answers = [
-            normalize_answer(answer)
-            for answer in row.get("acceptable_answers", [])
-        ]
-        acceptable_answers = [
-            answer
-            for answer in acceptable_answers
-            if answer != ""
-        ]
+
+        if isinstance(extracted, list):
+            acceptable_answers = [
+                answer
+                for answer in extracted
+                if answer != ""
+            ]
+        else:
+            acceptable_answers = [
+                normalize_answer(answer)
+                for answer in row.get("acceptable_answers", [])
+            ]
+            acceptable_answers = [
+                answer
+                for answer in acceptable_answers
+                if answer != ""
+            ]
 
         if is_ambiguous:
             return "", acceptable_answers, True
