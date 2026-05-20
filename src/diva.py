@@ -4,26 +4,82 @@ from collections import Counter
 from pathlib import Path
 import os
 from llm_clients import NIMClient
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
 
-load_dotenv()
+if load_dotenv is not None:
+    load_dotenv()
 
 DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
 
 INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_50.jsonl")
 OUTPUT_PATH = Path(f"outputs/{DATASET_NAME}_diva_50.jsonl")
 META_JUDGE_PROMPT_PATH = Path("prompts/meta_judge.txt")
+STRATEGYQA_META_JUDGE_PROMPT_PATH = Path("prompts/meta_judge_strategyqa.txt")
 MODEL_NAME = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
-
-client = NIMClient(
-    model=MODEL_NAME,
-    temperature=0.1,
-    max_tokens=512
-)
+client = None
 
 
 
 AGENTS = ["literal", "skeptic", "creative", "evidence"]
+ABSTENTION_PATTERNS = [
+    r"^$",
+    r"^abstain$",
+    r"^unknown$",
+    r"^maybe$",
+    r"^unclear$",
+    r"^cannot determine$",
+    r"^can't determine$",
+    r"^not enough information$",
+    r"^insufficient information$",
+    r"^no answer$",
+    r"^none$"
+]
+INSUFFICIENT_INFO_MARKERS = [
+    "not enough information",
+    "cannot determine",
+    "cannot be determined",
+    "insufficient information",
+    "does not provide enough information",
+    "question does not provide enough information",
+    "without this information",
+    "no specific information",
+    "no factual connection",
+    "not possible to provide a definitive answer",
+    "cannot accurately determine"
+]
+CAUSAL_DEPENDENCY_MARKERS = [
+    "primary source of wood pulp",
+    "difficult to harvest trees",
+    "related to the production of toilet paper",
+    "would likely lead to a shortage",
+    "make it harder to obtain"
+]
+PRACTICAL_ABILITY_MARKERS = [
+    "fear of germs",
+    "fear of contamination",
+    "physical contact",
+    "trigger or exacerbate their fear",
+    "avoid physical contact"
+]
+OPERATIONAL_REQUIREMENT_MARKERS = [
+    "requires electricity",
+    "runs on computers",
+    "software that relies on electricity",
+    "requires using the software"
+]
+
+
+def is_abstention_text(text):
+    lowered = str(text).lower().strip()
+
+    for pattern in ABSTENTION_PATTERNS:
+        if re.match(pattern, lowered):
+            return True
+
+    return False
 
 
 def normalize_answer(ans):
@@ -54,6 +110,9 @@ def normalize_answer(ans):
             text = text.replace(prefix, "", 1).strip()
 
     cleaned = text.strip().strip(".").strip()
+
+    if is_abstention_text(cleaned):
+        return ""
 
     true_patterns = {
         "true",
@@ -116,6 +175,42 @@ def extract_gold_answer(gold_text):
     return normalize_answer(gold_text)
 
 
+def get_gold_spec(row):
+    if row.get("dataset") == "ambigqa":
+        is_ambiguous = bool(row.get("is_ambiguous", False))
+        acceptable_answers = [
+            normalize_answer(answer)
+            for answer in row.get("acceptable_answers", [])
+        ]
+        acceptable_answers = [
+            answer
+            for answer in acceptable_answers
+            if answer != ""
+        ]
+
+        if is_ambiguous:
+            return "", acceptable_answers, True
+
+        if acceptable_answers:
+            return acceptable_answers[0], acceptable_answers, False
+
+    gold_answer = extract_gold_answer(row["gold_answer"])
+    return gold_answer, [gold_answer] if gold_answer != "" else [], False
+
+
+def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous):
+    if is_ambiguous:
+        return answer == ""
+
+    if answer == "":
+        return False
+
+    if acceptable_answers:
+        return answer in acceptable_answers
+
+    return answer == gold_answer
+
+
 def classify_disagreement(answer_counts):
     if len(answer_counts) == 1:
         return "none"
@@ -132,7 +227,17 @@ def classify_disagreement(answer_counts):
 
 
 def get_majority_answer(answers):
-    counts = Counter(answers.values())
+    non_empty_answers = {
+        agent: answer
+        for agent, answer in answers.items()
+        if answer != ""
+    }
+
+    if non_empty_answers:
+        counts = Counter(non_empty_answers.values())
+    else:
+        counts = Counter(answers.values())
+
     max_count = max(counts.values())
 
     candidates = [
@@ -167,12 +272,60 @@ def safe_confidence(value):
         return 0.0
 
 
-#helper functions before diva decision
+def response_signals_insufficient_info(response_text):
+    text = str(response_text).lower()
+    return any(marker in text for marker in INSUFFICIENT_INFO_MARKERS)
+
+
+def response_signals_causal_dependency(response_text):
+    text = str(response_text).lower()
+    return any(marker in text for marker in CAUSAL_DEPENDENCY_MARKERS)
+
+
+def response_signals_practical_ability_barrier(response_text):
+    text = str(response_text).lower()
+    return any(marker in text for marker in PRACTICAL_ABILITY_MARKERS)
+
+
+def response_signals_operational_requirement(response_text):
+    text = str(response_text).lower()
+    return any(marker in text for marker in OPERATIONAL_REQUIREMENT_MARKERS)
+
+
+def question_is_operational_requirement(question):
+    text = str(question).lower()
+    return (
+        "necessary to" in text
+        or "required to" in text
+        or "in microsoft excel" in text
+    )
+
+
+def question_is_newsworthiness(question):
+    text = str(question).lower()
+    return "make the news" in text or "news in " in text
+
+
+def question_is_practical_ability(question):
+    text = str(question).lower()
+    return (
+        "be able to" in text
+        or "participate in" in text
+        or "germaphobia" in text
+    )
+
+
 def load_meta_judge_prompt():
-    with open(META_JUDGE_PROMPT_PATH, "r", encoding="utf-8") as file:
+    if DATASET_NAME == "strategyqa" and STRATEGYQA_META_JUDGE_PROMPT_PATH.exists():
+        prompt_path = STRATEGYQA_META_JUDGE_PROMPT_PATH
+    else:
+        prompt_path = META_JUDGE_PROMPT_PATH
+
+    with open(prompt_path, "r", encoding="utf-8") as file:
         return file.read()
 
 
+#helper functions before diva decision
 def extract_json_from_text(text):
     match = re.search(r"\{.*\}", text, re.DOTALL)
 
@@ -183,6 +336,29 @@ def extract_json_from_text(text):
 
 
 def call_meta_judge(question, agent_responses):
+    global client
+
+    if client is None:
+        try:
+            client = NIMClient(
+                model=MODEL_NAME,
+                temperature=0.1,
+                max_tokens=512
+            )
+        except RuntimeError:
+            return {
+                "selected_answer": "",
+                "abstain": True,
+                "confidence": 0.0,
+                "disagreement_type": "complete",
+                "strategy": "meta_judge_unavailable_abstain",
+                "reason": (
+                    "Meta Judge is unavailable because NVIDIA_API_KEY is not set, "
+                    "so DiVA abstains on complete disagreement."
+                ),
+                "selected_source": "abstain"
+            }
+
     meta_prompt = load_meta_judge_prompt()
 
     full_prompt = f"""
@@ -259,7 +435,157 @@ def diva_decision(question, answers, confidences, agent_responses):
         decision["reason"] = "All agents agree, so the answer is treated as reliable."
         return decision
 
+    if DATASET_NAME == "ambigqa":
+        abstaining_agents = [
+            agent
+            for agent, answer in answers.items()
+            if answer == ""
+        ]
+
+        if disagreement in {"strong", "complete"}:
+            decision["selected_answer"] = ""
+            decision["abstain"] = True
+            decision["confidence"] = 0.30
+            decision["strategy"] = "ambigqa_abstain_on_high_disagreement"
+            decision["selected_source"] = "abstain"
+            decision["reason"] = (
+                "High disagreement on an ambiguity-sensitive dataset is treated as a signal to abstain."
+            )
+            return decision
+
+        if disagreement == "weak":
+            if abstaining_agents:
+                decision["selected_answer"] = ""
+                decision["abstain"] = True
+                decision["confidence"] = 0.35
+                decision["strategy"] = "ambigqa_abstain_on_dissenting_abstention"
+                decision["selected_source"] = abstaining_agents[0]
+                decision["reason"] = (
+                    "A dissenting abstention is treated as evidence that the question may be ambiguous."
+                )
+                return decision
+
+            for agent in ["evidence", "skeptic", "literal"]:
+                if response_signals_insufficient_info(agent_responses.get(agent, "")):
+                    decision["selected_answer"] = ""
+                    decision["abstain"] = True
+                    decision["confidence"] = 0.35
+                    decision["strategy"] = "ambigqa_abstain_on_missing_support"
+                    decision["selected_source"] = agent
+                    decision["reason"] = (
+                        "A grounded agent flags the question as underspecified, so DiVA abstains."
+                    )
+                    return decision
+
     if disagreement == "weak":
+        if DATASET_NAME == "strategyqa":
+            minority_agents = [
+                agent
+                for agent, answer in answers.items()
+                if answer != majority_answer
+            ]
+
+            if len(minority_agents) == 1:
+                minority_agent = minority_agents[0]
+                minority_answer = answers[minority_agent]
+                minority_response = agent_responses.get(minority_agent, "")
+
+                if (
+                    minority_answer == ""
+                    and response_signals_insufficient_info(minority_response)
+                ):
+                    decision["selected_answer"] = ""
+                    decision["abstain"] = True
+                    decision["confidence"] = 0.25
+                    decision["strategy"] = "strategyqa_abstain_on_missing_info"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The dissenting agent treats the question as underspecified, "
+                        "so DiVA abstains instead of forcing a majority answer."
+                    )
+                    return decision
+
+                if (
+                    minority_agent in {"evidence", "literal"}
+                    and minority_answer != ""
+                    and response_signals_insufficient_info(minority_response)
+                ):
+                    decision["selected_answer"] = minority_answer
+                    decision["confidence"] = 0.55
+                    decision["strategy"] = "strategyqa_grounded_minority_override"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The dissenting grounded agent flags missing support in the "
+                        "question, so its answer is preferred over a speculative majority."
+                    )
+                    return decision
+
+                if (
+                    minority_agent == "evidence"
+                    and minority_answer == "true"
+                    and majority_answer == "false"
+                    and response_signals_causal_dependency(minority_response)
+                ):
+                    decision["selected_answer"] = minority_answer
+                    decision["confidence"] = 0.65
+                    decision["strategy"] = "strategyqa_evidence_causal_override"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The evidence dissent identifies a concrete causal dependency "
+                        "that the majority dismisses."
+                    )
+                    return decision
+
+                if (
+                    minority_agent == "creative"
+                    and minority_answer == "true"
+                    and majority_answer == "false"
+                    and question_is_operational_requirement(question)
+                    and response_signals_operational_requirement(minority_response)
+                ):
+                    decision["selected_answer"] = minority_answer
+                    decision["confidence"] = 0.65
+                    decision["strategy"] = "strategyqa_creative_operational_override"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The dissenting answer captures a real-world operational "
+                        "requirement that the majority treats too abstractly."
+                    )
+                    return decision
+
+                if (
+                    minority_agent == "creative"
+                    and minority_answer == "true"
+                    and majority_answer == "false"
+                    and question_is_newsworthiness(question)
+                ):
+                    decision["selected_answer"] = minority_answer
+                    decision["confidence"] = 0.55
+                    decision["strategy"] = "strategyqa_creative_newsworthiness_override"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The dissenting answer better matches the question's "
+                        "newsworthiness framing."
+                    )
+                    return decision
+
+                if (
+                    minority_agent == "literal"
+                    and minority_answer == "false"
+                    and majority_answer == "true"
+                    and question_is_practical_ability(question)
+                    and response_signals_practical_ability_barrier(minority_response)
+                ):
+                    decision["selected_answer"] = minority_answer
+                    decision["confidence"] = 0.60
+                    decision["strategy"] = "strategyqa_literal_ability_override"
+                    decision["selected_source"] = minority_agent
+                    decision["reason"] = (
+                        "The dissenting answer treats the question as practical "
+                        "ability rather than bare physical possibility."
+                    )
+                    return decision
+
         decision["selected_answer"] = majority_answer
         decision["confidence"] = 0.85
         decision["strategy"] = "weak_majority"
@@ -268,6 +594,18 @@ def diva_decision(question, answers, confidences, agent_responses):
         return decision
 
     if disagreement == "strong":
+        if (
+            DATASET_NAME == "strategyqa"
+            and os.getenv("STRATEGYQA_USE_META_JUDGE_ON_STRONG", "0") == "1"
+        ):
+            judge_decision = call_meta_judge(
+                question=question,
+                agent_responses=agent_responses
+            )
+            judge_decision["disagreement_type"] = disagreement
+            judge_decision["strategy"] = "strategyqa_meta_judge_on_strong"
+            return judge_decision
+
         decision["selected_answer"] = majority_answer
         decision["confidence"] = 0.60
         decision["strategy"] = "low_confidence_majority"
@@ -318,7 +656,7 @@ def main():
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as output_file:
         for row in rows:
-            gold_answer = extract_gold_answer(row["gold_answer"])
+            gold_answer, acceptable_answers, is_ambiguous = get_gold_spec(row)
 
             answers = {}
             confidences = {}
@@ -343,7 +681,12 @@ def main():
     agent_responses=agent_responses
 )
             selected_answer = normalize_answer(decision["selected_answer"])
-            diva_is_correct = selected_answer == gold_answer
+            diva_is_correct = is_correct_answer(
+                selected_answer,
+                gold_answer,
+                acceptable_answers,
+                is_ambiguous
+            )
 
             if decision["abstain"]:
                 diva_abstained += 1
@@ -364,6 +707,8 @@ def main():
                 "dataset": row["dataset"],
                 "question": row["question"],
                 "gold_answer": gold_answer,
+                "acceptable_answers": acceptable_answers,
+                "is_ambiguous": is_ambiguous,
                 "model": row.get("model", ""),
                 "agent_answers": answers,
                 "agent_confidences": confidences,

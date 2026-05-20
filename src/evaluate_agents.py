@@ -21,6 +21,29 @@ AGENTS = ["literal", "skeptic", "creative", "evidence"]
 PRIORITY_AGENTS = ["evidence", "literal", "creative", "skeptic"]
 
 OVERCONFIDENCE_THRESHOLD = 0.8
+ABSTENTION_PATTERNS = [
+    r"^$",
+    r"^abstain$",
+    r"^unknown$",
+    r"^maybe$",
+    r"^unclear$",
+    r"^cannot determine$",
+    r"^can't determine$",
+    r"^not enough information$",
+    r"^insufficient information$",
+    r"^no answer$",
+    r"^none$"
+]
+
+
+def is_abstention_text(text):
+    lowered = str(text).lower().strip()
+
+    for pattern in ABSTENTION_PATTERNS:
+        if re.match(pattern, lowered):
+            return True
+
+    return False
 
 
 def normalize_answer(ans):
@@ -65,6 +88,9 @@ def normalize_answer(ans):
 
     # Clean surrounding punctuation
     cleaned = text.strip().strip(".").strip()
+
+    if is_abstention_text(cleaned):
+        return ""
 
     # Boolean normalization
     true_patterns = {
@@ -133,6 +159,42 @@ def extract_gold_answer(gold_text):
     return normalize_answer(gold_text)
 
 
+def get_gold_spec(row):
+    if row.get("dataset") == "ambigqa":
+        is_ambiguous = bool(row.get("is_ambiguous", False))
+        acceptable_answers = [
+            normalize_answer(answer)
+            for answer in row.get("acceptable_answers", [])
+        ]
+        acceptable_answers = [
+            answer
+            for answer in acceptable_answers
+            if answer != ""
+        ]
+
+        if is_ambiguous:
+            return "", acceptable_answers, True
+
+        if acceptable_answers:
+            return acceptable_answers[0], acceptable_answers, False
+
+    gold_answer = extract_gold_answer(row["gold_answer"])
+    return gold_answer, [gold_answer] if gold_answer != "" else [], False
+
+
+def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous):
+    if is_ambiguous:
+        return answer == ""
+
+    if answer == "":
+        return False
+
+    if acceptable_answers:
+        return answer in acceptable_answers
+
+    return answer == gold_answer
+
+
 def classify_disagreement(answer_counts):
     if len(answer_counts) == 1:
         return "none"
@@ -149,7 +211,17 @@ def classify_disagreement(answer_counts):
 
 
 def get_majority_answer(answers):
-    counts = Counter(answers.values())
+    non_empty_answers = {
+        agent: answer
+        for agent, answer in answers.items()
+        if answer != ""
+    }
+
+    if non_empty_answers:
+        counts = Counter(non_empty_answers.values())
+    else:
+        counts = Counter(answers.values())
+
     max_count = max(counts.values())
 
     candidates = [
@@ -206,12 +278,17 @@ def main():
     agent_correct = Counter()
     agent_wrong = Counter()
     agent_overconfident_wrong = Counter()
+    agent_abstained = Counter()
 
     agent_conf_sum = defaultdict(float)
     agent_conf_count = Counter()
 
     majority_correct = 0
     oracle_correct = 0
+    correct_abstentions = 0
+    wrong_abstentions = 0
+    ambiguous_total = 0
+    answerable_total = 0
 
     disagreement_counts = Counter()
     disagreement_majority_correct = Counter()
@@ -231,7 +308,12 @@ def main():
     overconfident_error_cases = []
 
     for row in rows:
-        gold_answer = extract_gold_answer(row["gold_answer"])
+        gold_answer, acceptable_answers, is_ambiguous = get_gold_spec(row)
+
+        if is_ambiguous:
+            ambiguous_total += 1
+        else:
+            answerable_total += 1
 
         answers = {}
         confidences = {}
@@ -247,7 +329,12 @@ def main():
         disagreement_type = classify_disagreement(answer_counts)
         disagreement_counts[disagreement_type] += 1
 
-        is_majority_correct = majority_answer == gold_answer
+        is_majority_correct = is_correct_answer(
+            majority_answer,
+            gold_answer,
+            acceptable_answers,
+            is_ambiguous
+        )
 
         if is_majority_correct:
             majority_correct += 1
@@ -257,6 +344,8 @@ def main():
                 "id": row["id"],
                 "question": row["question"],
                 "gold_answer": gold_answer,
+                "acceptable_answers": acceptable_answers,
+                "is_ambiguous": is_ambiguous,
                 "majority_answer": majority_answer,
                 "majority_count": majority_count,
                 "disagreement_type": disagreement_type,
@@ -267,7 +356,21 @@ def main():
         any_agent_correct = False
 
         for agent in AGENTS:
-            is_correct = answers[agent] == gold_answer
+            if answers[agent] == "":
+                agent_abstained[agent] += 1
+
+                if is_ambiguous:
+                    correct_abstentions += 1
+                else:
+                    wrong_abstentions += 1
+                continue
+
+            is_correct = is_correct_answer(
+                answers[agent],
+                gold_answer,
+                acceptable_answers,
+                is_ambiguous
+            )
             confidence = confidences[agent]
 
             if is_correct:
@@ -317,16 +420,27 @@ def main():
     for agent in AGENTS:
         correct = agent_correct[agent]
         accuracy = correct / total
+        answered = total - agent_abstained[agent]
+        selective_accuracy = correct / answered if answered else 0.0
+        abstention_rate = agent_abstained[agent] / total
 
         avg_conf = None
         if agent_conf_count[agent] > 0:
             avg_conf = agent_conf_sum[agent] / agent_conf_count[agent]
 
         if avg_conf is None:
-            print(f"{agent}: {correct}/{total} = {accuracy:.2%}")
+            print(
+                f"{agent}: {correct}/{total} = {accuracy:.2%}, "
+                f"answered = {answered}/{total}, "
+                f"selective accuracy = {selective_accuracy:.2%}, "
+                f"abstention rate = {abstention_rate:.2%}"
+            )
         else:
             print(
                 f"{agent}: {correct}/{total} = {accuracy:.2%}, "
+                f"answered = {answered}/{total}, "
+                f"selective accuracy = {selective_accuracy:.2%}, "
+                f"abstention rate = {abstention_rate:.2%}, "
                 f"avg confidence = {avg_conf:.3f}"
             )
 
@@ -357,6 +471,13 @@ def main():
         f"{oracle_correct / total:.2%}"
     )
     print("Oracle means at least one agent had the correct answer.")
+
+    if DATASET_NAME == "ambigqa":
+        print("\nAmbiguity Breakdown")
+        print(f"Ambiguous questions: {ambiguous_total}/{total} = {ambiguous_total / total:.2%}")
+        print(f"Answerable questions: {answerable_total}/{total} = {answerable_total / total:.2%}")
+        print(f"Correct abstentions: {correct_abstentions}")
+        print(f"Wrong abstentions: {wrong_abstentions}")
 
     print("\nDisagreement Counts")
     for dtype in ["none", "weak", "strong", "complete"]:
@@ -413,8 +534,12 @@ def main():
             "agent",
             "correct",
             "wrong",
+            "abstained",
             "total",
             "accuracy",
+            "answered",
+            "selective_accuracy",
+            "abstention_rate",
             "avg_confidence",
             "overconfident_wrong",
             "overconfident_error_rate"
@@ -423,7 +548,11 @@ def main():
         for agent in AGENTS:
             correct = agent_correct[agent]
             wrong = agent_wrong[agent]
+            abstained = agent_abstained[agent]
             accuracy = correct / total
+            answered = total - abstained
+            selective_accuracy = correct / answered if answered else 0.0
+            abstention_rate = abstained / total
 
             avg_conf = ""
             if agent_conf_count[agent] > 0:
@@ -439,8 +568,12 @@ def main():
                 agent,
                 correct,
                 wrong,
+                abstained,
                 total,
                 accuracy,
+                answered,
+                selective_accuracy,
+                abstention_rate,
                 avg_conf,
                 overconf_wrong,
                 overconf_rate
@@ -486,11 +619,27 @@ def main():
         writer.writerow(["oracle_correct", oracle_correct])
         writer.writerow(["oracle_accuracy", oracle_correct / total])
         writer.writerow(["overconfidence_threshold", OVERCONFIDENCE_THRESHOLD])
+        if DATASET_NAME == "ambigqa":
+            writer.writerow(["ambiguous_total", ambiguous_total])
+            writer.writerow(["answerable_total", answerable_total])
+            writer.writerow(["correct_abstentions", correct_abstentions])
+            writer.writerow(["wrong_abstentions", wrong_abstentions])
 
         for agent in AGENTS:
             writer.writerow([f"{agent}_correct", agent_correct[agent]])
             writer.writerow([f"{agent}_wrong", agent_wrong[agent]])
+            writer.writerow([f"{agent}_abstained", agent_abstained[agent]])
             writer.writerow([f"{agent}_accuracy", agent_correct[agent] / total])
+            writer.writerow([f"{agent}_answered", total - agent_abstained[agent]])
+            if total - agent_abstained[agent] > 0:
+                writer.writerow([
+                    f"{agent}_selective_accuracy",
+                    agent_correct[agent] / (total - agent_abstained[agent])
+                ])
+            writer.writerow([
+                f"{agent}_abstention_rate",
+                agent_abstained[agent] / total
+            ])
             writer.writerow([
                 f"{agent}_overconfident_wrong",
                 agent_overconfident_wrong[agent]

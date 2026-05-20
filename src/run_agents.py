@@ -99,6 +99,22 @@ Do not write maybe, unknown, unclear, a number, or a full sentence in the Final 
 Do not put confidence or explanation inside the Final Answer field.
 """
 
+    if dataset_name == "ambigqa":
+        return """
+Dataset specific instruction:
+This is an ambiguity-sensitive open-domain question.
+
+If the question is genuinely ambiguous, underspecified, or has multiple plausible answers,
+you should abstain instead of guessing.
+
+Your Final Answer must be exactly one of:
+1. a short answer phrase
+2. abstain
+
+Do not write a full sentence in the Final Answer field.
+Do not put confidence or explanation inside the Final Answer field.
+"""
+
     if dataset_name == "gsm8k":
         return """
 Dataset specific instruction:
@@ -165,14 +181,11 @@ def main():
         for index, sample in enumerate(samples):
             print(f"Running sample {index + 1}/{NUM_SAMPLES}: {sample['id']}")
 
-            result = {
-    "id": sample["id"],
-    "dataset": sample.get("dataset", DATASET_NAME),
-    "question": sample["question"],
-    "gold_answer": sample.get("answer", sample.get("gold_answer")),
-    "model": MODEL_NAME,
-    "agents": {}
-}
+            result = dict(sample)
+            result["dataset"] = sample.get("dataset", DATASET_NAME)
+            result["gold_answer"] = sample.get("answer", sample.get("gold_answer", ""))
+            result["model"] = MODEL_NAME
+            result["agents"] = {}
 
             for agent_name in agent_names:
                 print(f"Calling {agent_name} agent")
