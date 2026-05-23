@@ -4,27 +4,38 @@ import re
 import time
 from pathlib import Path
 
-from llm_clients import NIMClient
+from llm_clients import get_llm_client
 
 from dotenv import load_dotenv
 load_dotenv()
 
 DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
+RUN_TAG = os.getenv("RUN_TAG", "").strip()
 
-DATA_PATH = Path(f"data/{DATASET_NAME}_50.jsonl")
+DATA_PATH = Path(f"data/{DATASET_NAME}_{SAMPLE_SIZE}.jsonl")
 PROMPT_DIR = Path("prompts")
 OUTPUT_DIR = Path("outputs")
-OUTPUT_PATH = OUTPUT_DIR / f"{DATASET_NAME}_agents_50.jsonl"
+output_suffix = f"_{RUN_TAG}" if RUN_TAG else ""
+OUTPUT_PATH = OUTPUT_DIR / f"{DATASET_NAME}_agents_{SAMPLE_SIZE}{output_suffix}.jsonl"
 
 MODEL_NAME = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
-NUM_SAMPLES = 50
+NUM_SAMPLES = SAMPLE_SIZE
+AGENT_SLEEP_SECONDS = float(os.getenv("AGENT_SLEEP_SECONDS", "0.5"))
+RESUME_RUN = os.getenv("RESUME_RUN", "1") == "1"
+AGENT_CALL_RECOVERY_RETRIES = int(os.getenv("AGENT_CALL_RECOVERY_RETRIES", "3"))
+AGENT_FAILURE_COOLDOWN_SECONDS = float(os.getenv("AGENT_FAILURE_COOLDOWN_SECONDS", "45"))
 
 
-client = NIMClient(
+client = get_llm_client(
     model=MODEL_NAME,
     temperature=0.3,
     max_tokens=256
 )
+
+
+def log(message):
+    print(message, flush=True)
 
 
 def load_jsonl(path):
@@ -35,6 +46,31 @@ def load_jsonl(path):
             rows.append(json.loads(line))
 
     return rows
+
+
+def load_completed_ids(path):
+    if not path.exists():
+        return set()
+
+    completed_ids = set()
+
+    with open(path, "r", encoding="utf-8") as file:
+        for line in file:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            sample_id = row.get("id")
+            if sample_id:
+                completed_ids.add(sample_id)
+
+    return completed_ids
 
 
 def load_prompt(agent_name):
@@ -99,7 +135,7 @@ Do not write maybe, unknown, unclear, a number, or a full sentence in the Final 
 Do not put confidence or explanation inside the Final Answer field.
 """
 
-    if dataset_name == "ambigqa":
+    if dataset_name in {"ambigqa", "condambigqa2k"}:
         return """
 Dataset specific instruction:
 This is an ambiguity-sensitive open-domain question.
@@ -157,13 +193,49 @@ Question:
     }
 
 
+def call_agent_with_recovery(question, agent_name, prompt_text):
+    for attempt in range(AGENT_CALL_RECOVERY_RETRIES + 1):
+        try:
+            return call_agent(
+                question=question,
+                agent_name=agent_name,
+                prompt_text=prompt_text
+            )
+        except RuntimeError as error:
+            if attempt >= AGENT_CALL_RECOVERY_RETRIES:
+                raise
+
+            wait = AGENT_FAILURE_COOLDOWN_SECONDS * (attempt + 1)
+            log(
+                f"{agent_name} agent failed with '{error}'. "
+                f"Cooling down for {wait:.0f} seconds before retry {attempt + 1}/{AGENT_CALL_RECOVERY_RETRIES}."
+            )
+            time.sleep(wait)
+
+
 def main():
     if not os.getenv("NVIDIA_API_KEY"):
         raise ValueError("NVIDIA_API_KEY is missing. Export it before running.")
 
     OUTPUT_DIR.mkdir(exist_ok=True)
+    log(f"Starting run_agents for dataset={DATASET_NAME}, samples={NUM_SAMPLES}, model={MODEL_NAME}, run_tag={RUN_TAG or 'default'}")
+    log(f"Reading data from {DATA_PATH}")
+    log(f"Writing outputs to {OUTPUT_PATH}")
 
     samples = load_jsonl(DATA_PATH)[:NUM_SAMPLES]
+    log(f"Loaded {len(samples)} samples")
+    completed_ids = load_completed_ids(OUTPUT_PATH) if RESUME_RUN else set()
+
+    if completed_ids:
+        log(f"Resume enabled. Found {len(completed_ids)} completed samples in existing output.")
+
+    remaining_samples = [
+        sample
+        for sample in samples
+        if sample["id"] not in completed_ids
+    ]
+
+    log(f"Remaining samples to run: {len(remaining_samples)}")
 
     agent_names = [
         "literal",
@@ -177,9 +249,11 @@ def main():
         for agent_name in agent_names
     }
 
-    with open(OUTPUT_PATH, "w", encoding="utf-8") as output_file:
-        for index, sample in enumerate(samples):
-            print(f"Running sample {index + 1}/{NUM_SAMPLES}: {sample['id']}")
+    file_mode = "a" if completed_ids else "w"
+
+    with open(OUTPUT_PATH, file_mode, encoding="utf-8") as output_file:
+        for index, sample in enumerate(remaining_samples, start=len(completed_ids) + 1):
+            log(f"Running sample {index}/{NUM_SAMPLES}: {sample['id']}")
 
             result = dict(sample)
             result["dataset"] = sample.get("dataset", DATASET_NAME)
@@ -188,9 +262,9 @@ def main():
             result["agents"] = {}
 
             for agent_name in agent_names:
-                print(f"Calling {agent_name} agent")
+                log(f"Calling {agent_name} agent")
 
-                agent_output = call_agent(
+                agent_output = call_agent_with_recovery(
                     question=sample["question"],
                     agent_name=agent_name,
                     prompt_text=prompts[agent_name]
@@ -198,14 +272,15 @@ def main():
 
                 result["agents"][agent_name] = agent_output
 
-                time.sleep(3)
+                if AGENT_SLEEP_SECONDS > 0:
+                    time.sleep(AGENT_SLEEP_SECONDS)
 
             output_file.write(
                 json.dumps(result, ensure_ascii=False) + "\n"
             )
             output_file.flush()
 
-    print(f"Done. Saved results to {OUTPUT_PATH}")
+    log(f"Done. Saved results to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

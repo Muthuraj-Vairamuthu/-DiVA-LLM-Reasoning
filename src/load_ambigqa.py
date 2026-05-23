@@ -4,15 +4,18 @@ import os
 
 os.makedirs("data", exist_ok=True)
 
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 dataset = load_dataset("sewon/ambig_qa", "light", split="train")
 
 count = 0
 ambiguous = 0
 answerable = 0
 
-with open("data/ambigqa_50.jsonl", "w", encoding="utf-8") as f:
+output_path = f"data/ambigqa_{SAMPLE_SIZE}.jsonl"
+
+with open(output_path, "w", encoding="utf-8") as f:
     for row in dataset:
-        if count >= 50:
+        if count >= SAMPLE_SIZE:
             break
 
         annotations = row["annotations"]
@@ -58,6 +61,6 @@ with open("data/ambigqa_50.jsonl", "w", encoding="utf-8") as f:
         else:
             answerable += 1
 
-print(f"Saved {count} AmbigQA samples to data/ambigqa_50.jsonl")
+print(f"Saved {count} AmbigQA samples to {output_path}")
 print(f"Ambiguous: {ambiguous}")
 print(f"Answerable: {answerable}")
