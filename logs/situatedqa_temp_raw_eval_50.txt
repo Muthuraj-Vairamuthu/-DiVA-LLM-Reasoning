@@ -1,0 +1,270 @@
+
+==============================
+EVALUATION SUMMARY
+==============================
+Input file: outputs/situatedqa_temp_raw_agents_50.jsonl
+Total samples: 50
+
+Agent Accuracy
+literal: 8/50 = 16.00%, answered = 42/50, selective accuracy = 19.05%, abstention rate = 16.00%, avg confidence = 0.802
+skeptic: 13/50 = 26.00%, answered = 37/50, selective accuracy = 35.14%, abstention rate = 26.00%, avg confidence = 0.770
+creative: 0/50 = 0.00%, answered = 50/50, selective accuracy = 0.00%, abstention rate = 0.00%, avg confidence = 0.824
+evidence: 19/50 = 38.00%, answered = 31/50, selective accuracy = 61.29%, abstention rate = 38.00%, avg confidence = 0.675
+
+Overconfident Error Rate
+Threshold: confidence >= 0.8
+literal: 41/42 = 97.62%
+skeptic: 32/37 = 86.49%
+creative: 47/50 = 94.00%
+evidence: 26/31 = 83.87%
+
+Majority Vote
+majority: 13/50 = 26.00%
+
+Oracle Accuracy
+oracle: 25/50 = 50.00%
+Oracle means at least one agent abstained, which is treated as the correct behavior for this ambiguity-detection setup.
+
+Ambiguity Breakdown
+Ambiguous questions: 50/50 = 100.00%
+Answerable questions: 0/50 = 0.00%
+Correct abstentions: NA at the system level here; use diva.py output for final abstention metrics.
+Wrong abstentions: NA because this dataset is treated as fully ambiguous in the current setup.
+
+Disagreement Counts
+none: 8/50 = 16.00%
+weak: 13/50 = 26.00%
+strong: 25/50 = 50.00%
+complete: 4/50 = 8.00%
+
+Majority Accuracy by Disagreement Type
+none: 0/8 = 0.00%
+weak: 4/13 = 30.77%
+strong: 6/25 = 24.00%
+complete: 3/4 = 75.00%
+
+Agent Accuracy by Disagreement Type
+
+none:
+  literal: 0/8 = 0.00%
+  skeptic: 0/8 = 0.00%
+  creative: 0/8 = 0.00%
+  evidence: 0/8 = 0.00%
+
+weak:
+  literal: 4/13 = 30.77%
+  skeptic: 5/13 = 38.46%
+  creative: 0/13 = 0.00%
+  evidence: 5/13 = 38.46%
+
+strong:
+  literal: 4/25 = 16.00%
+  skeptic: 7/25 = 28.00%
+  creative: 0/25 = 0.00%
+  evidence: 11/25 = 44.00%
+
+complete:
+  literal: 0/4 = 0.00%
+  skeptic: 1/4 = 25.00%
+  creative: 0/4 = 0.00%
+  evidence: 3/4 = 75.00%
+
+Failed Majority Cases
+{'id': 'situatedqa_temp_raw_0', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1984'], 'is_ambiguous': True, 'majority_answer': '2002', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2002', 'skeptic': '2002', 'creative': '2028', 'evidence': '1996'}, 'confidences': {'literal': 0.9, 'skeptic': 0.7, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_1', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1984'], 'is_ambiguous': True, 'majority_answer': '2028', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2028', 'skeptic': '2028', 'creative': '1984', 'evidence': '1980'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_2', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1980'], 'is_ambiguous': True, 'majority_answer': '2002', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2002', 'skeptic': '1996', 'creative': '2010', 'evidence': '2002'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_3', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1980'], 'is_ambiguous': True, 'majority_answer': '2002', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2002', 'skeptic': '2002', 'creative': '1996', 'evidence': '2002'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_4', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1984'], 'is_ambiguous': True, 'majority_answer': '2002', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2002', 'skeptic': '2002', 'creative': '2002', 'evidence': '2028'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.6, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_5', 'question': 'when was the last time the united states hosted the olympics', 'gold_answer': '', 'acceptable_answers': ['1980'], 'is_ambiguous': True, 'majority_answer': '2002', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2002', 'skeptic': '1996', 'creative': '2002', 'evidence': '2002'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_7', 'question': "when's the last time michigan won the national championship in basketball", 'gold_answer': '', 'acceptable_answers': ['1989'], 'is_ambiguous': True, 'majority_answer': '1989', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '1989', 'skeptic': '2019', 'creative': '1993', 'evidence': '1989'}, 'confidences': {'literal': 0.8, 'skeptic': 0.7, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_8', 'question': "when's the last time michigan won the national championship in basketball", 'gold_answer': '', 'acceptable_answers': ['1989'], 'is_ambiguous': True, 'majority_answer': '1993', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '1993', 'skeptic': '1993', 'creative': '1993', 'evidence': '1993'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_9', 'question': "when's the last time michigan won the national championship in basketball", 'gold_answer': '', 'acceptable_answers': ['1989'], 'is_ambiguous': True, 'majority_answer': '1993', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '', 'skeptic': '2013', 'creative': '1993', 'evidence': '1993'}, 'confidences': {'literal': None, 'skeptic': 0.7, 'creative': 0.6, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_15', 'question': 'when did italy last win a 6 nations match', 'gold_answer': '', 'acceptable_answers': ['2013'], 'is_ambiguous': True, 'majority_answer': '2013', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '2013', 'skeptic': '2013', 'creative': '2013', 'evidence': '2013'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.7}}
+{'id': 'situatedqa_temp_raw_19', 'question': 'when was the last time pakistan won icc', 'gold_answer': '', 'acceptable_answers': ['2017'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2017', 'skeptic': '2017', 'creative': '1992', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_20', 'question': 'when was the last time pakistan won icc', 'gold_answer': '', 'acceptable_answers': ['2017'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2017', 'skeptic': '2017', 'creative': '2009', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.2}}
+{'id': 'situatedqa_temp_raw_22', 'question': 'when did the previous total solar eclipse occur', 'gold_answer': '', 'acceptable_answers': ['2020'], 'is_ambiguous': True, 'majority_answer': '2021', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2020', 'skeptic': '2021', 'creative': '2021', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_23', 'question': 'when did the previous total solar eclipse occur', 'gold_answer': '', 'acceptable_answers': ['2020', '2020'], 'is_ambiguous': True, 'majority_answer': '2020', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2020', 'skeptic': '2017', 'creative': '2020', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.7, 'creative': 0.8, 'evidence': 0.2}}
+{'id': 'situatedqa_temp_raw_24', 'question': 'who is the highest goals scorer in la liga 2017', 'gold_answer': '', 'acceptable_answers': ['lionel messi'], 'is_ambiguous': True, 'majority_answer': 'lionel messi', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': 'lionel messi', 'skeptic': 'cristiano ronaldo', 'creative': 'lionel messi', 'evidence': 'lionel messi'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_25', 'question': 'how many episodes are in the second season of pretty little liars', 'gold_answer': '', 'acceptable_answers': ['25'], 'is_ambiguous': True, 'majority_answer': '25', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '25', 'skeptic': '25', 'creative': '25', 'evidence': '25'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_26', 'question': "who wrote i'll be there for you", 'gold_answer': '', 'acceptable_answers': ['danny wilde', 'allee willis', 'david crane', 'the rembrandts', 'marta kauffman', 'phil sōlem', 'michael skloff'], 'is_ambiguous': True, 'majority_answer': 'the rembrandts', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': 'the rembrandts', 'skeptic': 'the rembrandts', 'creative': 'the rembrandts', 'evidence': 'the rembrandts'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_27', 'question': 'who was the first test captain of india', 'gold_answer': '', 'acceptable_answers': ['ck nayudu'], 'is_ambiguous': True, 'majority_answer': 'c.k. nayudu', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': 'c.k. nayudu', 'skeptic': 'c.k. nayudu', 'creative': 'c.k. nayudu', 'evidence': ''}, 'confidences': {'literal': 0.9, 'skeptic': 0.7, 'creative': 0.85, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_28', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['2017'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '2017', 'skeptic': '2017', 'creative': '2017', 'evidence': '2017'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_29', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['2017'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '2017', 'skeptic': '2017', 'creative': '2017', 'evidence': '2017'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_30', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['never'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2022', 'skeptic': '2017', 'creative': '2022', 'evidence': '2017'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 1.0}}
+{'id': 'situatedqa_temp_raw_31', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['never'], 'is_ambiguous': True, 'majority_answer': '2022', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2017', 'skeptic': '2017', 'creative': '2022', 'evidence': '2022'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_32', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['2017'], 'is_ambiguous': True, 'majority_answer': '2022', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2022', 'skeptic': '2022', 'creative': '2022', 'evidence': '2017'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_33', 'question': 'when’s the last time the houston astros won the world series', 'gold_answer': '', 'acceptable_answers': ['never'], 'is_ambiguous': True, 'majority_answer': '2017', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2022', 'skeptic': '2017', 'creative': '2022', 'evidence': '2017'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_34', 'question': 'where is the headquarters of the newly formed asian infrastructure investment bank (aiib) located', 'gold_answer': '', 'acceptable_answers': ['beijing china'], 'is_ambiguous': True, 'majority_answer': 'beijing', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': 'beijing', 'skeptic': 'beijing', 'creative': 'beijing', 'evidence': 'beijing'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_35', 'question': 'what do you call a group of badgers', 'gold_answer': '', 'acceptable_answers': ['cete'], 'is_ambiguous': True, 'majority_answer': 'clan', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': 'clan', 'skeptic': 'a clyth', 'creative': 'clan', 'evidence': 'clan'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.85, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_36', 'question': 'what was the number 1 song on july 11 1982', 'gold_answer': '', 'acceptable_answers': ['"ebony and ivory"'], 'is_ambiguous': True, 'majority_answer': 'tainted love', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': 'tainted love', 'skeptic': '', 'creative': 'tainted love', 'evidence': 'eye of the tiger'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_37', 'question': 'who fought at the battle of the boyne', 'gold_answer': '', 'acceptable_answers': ['williamite forces', 'jacobite forces'], 'is_ambiguous': True, 'majority_answer': 'william iii and james ii', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': 'william iii and james ii', 'skeptic': 'william iii and james ii', 'creative': 'william iii', 'evidence': ''}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.85, 'evidence': None}}
+{'id': 'situatedqa_temp_raw_38', 'question': 'when did fifty shades of grey book come out', 'gold_answer': '', 'acceptable_answers': ['2011'], 'is_ambiguous': True, 'majority_answer': '2011', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2012', 'skeptic': '2011', 'creative': '2011', 'evidence': '2011'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_39', 'question': 'who plays sister on orange is the new black', 'gold_answer': '', 'acceptable_answers': ['beth fowler'], 'is_ambiguous': True, 'majority_answer': 'laura prepon', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': 'laura prepon', 'skeptic': 'uzo aduba', 'creative': 'laura prepon', 'evidence': 'diane guerrero'}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_40', 'question': 'how many episodes are in pretty little liars season 1', 'gold_answer': '', 'acceptable_answers': ['22'], 'is_ambiguous': True, 'majority_answer': '10', 'majority_count': 4, 'disagreement_type': 'none', 'answers': {'literal': '10', 'skeptic': '10', 'creative': '10', 'evidence': '10'}, 'confidences': {'literal': 0.9, 'skeptic': 0.9, 'creative': 0.9, 'evidence': 0.9}}
+{'id': 'situatedqa_temp_raw_43', 'question': 'when did tipperary last win the all ireland', 'gold_answer': '', 'acceptable_answers': ['2019'], 'is_ambiguous': True, 'majority_answer': '2020', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2020', 'skeptic': '2010', 'creative': '2020', 'evidence': ''}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_45', 'question': 'when did tipperary last win the all ireland', 'gold_answer': '', 'acceptable_answers': ['2016'], 'is_ambiguous': True, 'majority_answer': '2010', 'majority_count': 3, 'disagreement_type': 'weak', 'answers': {'literal': '2010', 'skeptic': '', 'creative': '2010', 'evidence': '2010'}, 'confidences': {'literal': 0.8, 'skeptic': 0.6, 'creative': 0.8, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_46', 'question': 'when did tipperary last win the all ireland', 'gold_answer': '', 'acceptable_answers': ['2019'], 'is_ambiguous': True, 'majority_answer': '2019', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '2010', 'skeptic': '2010', 'creative': '2019', 'evidence': '2019'}, 'confidences': {'literal': 0.7, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.6}}
+{'id': 'situatedqa_temp_raw_47', 'question': 'when did tipperary last win the all ireland', 'gold_answer': '', 'acceptable_answers': ['2016'], 'is_ambiguous': True, 'majority_answer': '2010', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': '', 'skeptic': '', 'creative': '2010', 'evidence': '2010'}, 'confidences': {'literal': 0.4, 'skeptic': 0.6, 'creative': 0.9, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_48', 'question': "who played opie's friends on the andy griffith show", 'gold_answer': '', 'acceptable_answers': ['david alan bailey', 'richard keith'], 'is_ambiguous': True, 'majority_answer': 'goober gomer emmett floyd', 'majority_count': 1, 'disagreement_type': 'complete', 'answers': {'literal': 'ronny howard and franklin', 'skeptic': '', 'creative': 'ron howard don knotts and others', 'evidence': 'goober gomer emmett floyd'}, 'confidences': {'literal': 0.8, 'skeptic': 0.6, 'creative': 0.8, 'evidence': 0.8}}
+{'id': 'situatedqa_temp_raw_49', 'question': 'what is the biggest hotel in las vegas nv', 'gold_answer': '', 'acceptable_answers': ['mgm grand'], 'is_ambiguous': True, 'majority_answer': 'the venetian', 'majority_count': 2, 'disagreement_type': 'strong', 'answers': {'literal': 'mgm grand', 'skeptic': 'the venetian', 'creative': 'mgm grand', 'evidence': 'the venetian'}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.9, 'evidence': 0.6}}
+
+Complete Disagreement Cases
+{'id': 'situatedqa_temp_raw_6', 'question': 'who wrote linkin park shadow of the day', 'gold_answer': '', 'answers': {'literal': 'mike shinoda', 'skeptic': 'brad delson', 'creative': 'chester bennington', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.9, 'creative': 0.8, 'evidence': None}}
+{'id': 'situatedqa_temp_raw_18', 'question': 'when was the last time pakistan won icc', 'gold_answer': '', 'answers': {'literal': '1992', 'skeptic': '2022', 'creative': '2009', 'evidence': ''}, 'confidences': {'literal': 0.9, 'skeptic': 0.8, 'creative': 0.8, 'evidence': 0.2}}
+{'id': 'situatedqa_temp_raw_42', 'question': 'when did tipperary last win the all ireland', 'gold_answer': '', 'answers': {'literal': '1935', 'skeptic': '2020', 'creative': '2019', 'evidence': ''}, 'confidences': {'literal': 0.8, 'skeptic': 0.8, 'creative': 0.85, 'evidence': 0.0}}
+{'id': 'situatedqa_temp_raw_48', 'question': "who played opie's friends on the andy griffith show", 'gold_answer': '', 'answers': {'literal': 'ronny howard and franklin', 'skeptic': '', 'creative': 'ron howard don knotts and others', 'evidence': 'goober gomer emmett floyd'}, 'confidences': {'literal': 0.8, 'skeptic': 0.6, 'creative': 0.8, 'evidence': 0.8}}
+
+Overconfident Error Cases
+{'id': 'situatedqa_temp_raw_0', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_0', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2028', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_0', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '1996', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_1', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2028', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_1', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2028', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_1', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '1984', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_1', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '1980', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_2', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_2', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '1996', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_2', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_2', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_3', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_3', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_3', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '1996', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_3', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_4', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_4', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_4', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2028', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_5', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_5', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '1996', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_5', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_5', 'question': 'when was the last time the united states hosted the olympics', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2002', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_6', 'question': 'who wrote linkin park shadow of the day', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'mike shinoda', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_6', 'question': 'who wrote linkin park shadow of the day', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'brad delson', 'confidence': 0.9, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_6', 'question': 'who wrote linkin park shadow of the day', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'chester bennington', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_7', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'literal', 'gold_answer': '', 'agent_answer': '1989', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_7', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'creative', 'gold_answer': '', 'agent_answer': '1993', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_7', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '1989', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_8', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'literal', 'gold_answer': '', 'agent_answer': '1993', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_8', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '1993', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_8', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'creative', 'gold_answer': '', 'agent_answer': '1993', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_9', 'question': "when's the last time michigan won the national championship in basketball", 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '1993', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_10', 'question': 'who is the highest paid professional sports player', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'lebron james', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_10', 'question': 'who is the highest paid professional sports player', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'lebron james', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_11', 'question': 'who is the highest paid professional sports player', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'lebron james', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_12', 'question': 'who is the highest paid professional sports player', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'cristiano ronaldo', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_13', 'question': 'when did italy last win a 6 nations match', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_13', 'question': 'when did italy last win a 6 nations match', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_14', 'question': 'when did italy last win a 6 nations match', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2023', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_14', 'question': 'when did italy last win a 6 nations match', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2013', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_15', 'question': 'when did italy last win a 6 nations match', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2013', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_15', 'question': 'when did italy last win a 6 nations match', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2013', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_15', 'question': 'when did italy last win a 6 nations match', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2013', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_16', 'question': 'when did italy last win a 6 nations match', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2013', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_16', 'question': 'when did italy last win a 6 nations match', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_17', 'question': 'when did italy last win a 6 nations match', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_17', 'question': 'when did italy last win a 6 nations match', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_18', 'question': 'when was the last time pakistan won icc', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '1992', 'confidence': 0.9, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_18', 'question': 'when was the last time pakistan won icc', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_18', 'question': 'when was the last time pakistan won icc', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2009', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_19', 'question': 'when was the last time pakistan won icc', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_19', 'question': 'when was the last time pakistan won icc', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_19', 'question': 'when was the last time pakistan won icc', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '1992', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_20', 'question': 'when was the last time pakistan won icc', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_20', 'question': 'when was the last time pakistan won icc', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_20', 'question': 'when was the last time pakistan won icc', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2009', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_21', 'question': 'when is mom coming to nick at night', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'nick at night', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_22', 'question': 'when did the previous total solar eclipse occur', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_22', 'question': 'when did the previous total solar eclipse occur', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2021', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_22', 'question': 'when did the previous total solar eclipse occur', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2021', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_23', 'question': 'when did the previous total solar eclipse occur', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_23', 'question': 'when did the previous total solar eclipse occur', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_24', 'question': 'who is the highest goals scorer in la liga 2017', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'lionel messi', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_24', 'question': 'who is the highest goals scorer in la liga 2017', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'cristiano ronaldo', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_24', 'question': 'who is the highest goals scorer in la liga 2017', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'lionel messi', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_24', 'question': 'who is the highest goals scorer in la liga 2017', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'lionel messi', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_25', 'question': 'how many episodes are in the second season of pretty little liars', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '25', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_25', 'question': 'how many episodes are in the second season of pretty little liars', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '25', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_25', 'question': 'how many episodes are in the second season of pretty little liars', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '25', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_25', 'question': 'how many episodes are in the second season of pretty little liars', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '25', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_26', 'question': "who wrote i'll be there for you", 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'the rembrandts', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_26', 'question': "who wrote i'll be there for you", 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'the rembrandts', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_26', 'question': "who wrote i'll be there for you", 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'the rembrandts', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_26', 'question': "who wrote i'll be there for you", 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'the rembrandts', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_27', 'question': 'who was the first test captain of india', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'c.k. nayudu', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_27', 'question': 'who was the first test captain of india', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'c.k. nayudu', 'confidence': 0.85, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_28', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_28', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_28', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_28', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_29', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_29', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_29', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_29', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_30', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_30', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_30', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_30', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 1.0, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_31', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_31', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_31', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_31', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_32', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_32', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_32', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_32', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_33', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_33', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_33', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2022', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_33', 'question': 'when’s the last time the houston astros won the world series', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2017', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_34', 'question': 'where is the headquarters of the newly formed asian infrastructure investment bank (aiib) located', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'beijing', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_34', 'question': 'where is the headquarters of the newly formed asian infrastructure investment bank (aiib) located', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'beijing', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_34', 'question': 'where is the headquarters of the newly formed asian infrastructure investment bank (aiib) located', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'beijing', 'confidence': 0.8, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_34', 'question': 'where is the headquarters of the newly formed asian infrastructure investment bank (aiib) located', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'beijing', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_35', 'question': 'what do you call a group of badgers', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'clan', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_35', 'question': 'what do you call a group of badgers', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'a clyth', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_35', 'question': 'what do you call a group of badgers', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'clan', 'confidence': 0.85, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_35', 'question': 'what do you call a group of badgers', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'clan', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_36', 'question': 'what was the number 1 song on july 11 1982', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'tainted love', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_36', 'question': 'what was the number 1 song on july 11 1982', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'tainted love', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_36', 'question': 'what was the number 1 song on july 11 1982', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'eye of the tiger', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_37', 'question': 'who fought at the battle of the boyne', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'william iii and james ii', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_37', 'question': 'who fought at the battle of the boyne', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'william iii and james ii', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_37', 'question': 'who fought at the battle of the boyne', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'william iii', 'confidence': 0.85, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_38', 'question': 'when did fifty shades of grey book come out', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2012', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_38', 'question': 'when did fifty shades of grey book come out', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2011', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_38', 'question': 'when did fifty shades of grey book come out', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2011', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_38', 'question': 'when did fifty shades of grey book come out', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2011', 'confidence': 0.9, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_39', 'question': 'who plays sister on orange is the new black', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'laura prepon', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_39', 'question': 'who plays sister on orange is the new black', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'uzo aduba', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_39', 'question': 'who plays sister on orange is the new black', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'laura prepon', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_39', 'question': 'who plays sister on orange is the new black', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'diane guerrero', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_40', 'question': 'how many episodes are in pretty little liars season 1', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '10', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_40', 'question': 'how many episodes are in pretty little liars season 1', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '10', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_40', 'question': 'how many episodes are in pretty little liars season 1', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '10', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_40', 'question': 'how many episodes are in pretty little liars season 1', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '10', 'confidence': 0.9, 'disagreement_type': 'none'}
+{'id': 'situatedqa_temp_raw_41', 'question': 'who was the first president of our india', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'dr. rajendra prasad', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_42', 'question': 'when did tipperary last win the all ireland', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '1935', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_42', 'question': 'when did tipperary last win the all ireland', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_42', 'question': 'when did tipperary last win the all ireland', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2019', 'confidence': 0.85, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_43', 'question': 'when did tipperary last win the all ireland', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_43', 'question': 'when did tipperary last win the all ireland', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_43', 'question': 'when did tipperary last win the all ireland', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2020', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_44', 'question': 'when did tipperary last win the all ireland', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_45', 'question': 'when did tipperary last win the all ireland', 'agent': 'literal', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_45', 'question': 'when did tipperary last win the all ireland', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'weak'}
+{'id': 'situatedqa_temp_raw_46', 'question': 'when did tipperary last win the all ireland', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_46', 'question': 'when did tipperary last win the all ireland', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2019', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_47', 'question': 'when did tipperary last win the all ireland', 'agent': 'creative', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.9, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_47', 'question': 'when did tipperary last win the all ireland', 'agent': 'evidence', 'gold_answer': '', 'agent_answer': '2010', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_48', 'question': "who played opie's friends on the andy griffith show", 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'ronny howard and franklin', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_48', 'question': "who played opie's friends on the andy griffith show", 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'ron howard don knotts and others', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_48', 'question': "who played opie's friends on the andy griffith show", 'agent': 'evidence', 'gold_answer': '', 'agent_answer': 'goober gomer emmett floyd', 'confidence': 0.8, 'disagreement_type': 'complete'}
+{'id': 'situatedqa_temp_raw_49', 'question': 'what is the biggest hotel in las vegas nv', 'agent': 'literal', 'gold_answer': '', 'agent_answer': 'mgm grand', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_49', 'question': 'what is the biggest hotel in las vegas nv', 'agent': 'skeptic', 'gold_answer': '', 'agent_answer': 'the venetian', 'confidence': 0.8, 'disagreement_type': 'strong'}
+{'id': 'situatedqa_temp_raw_49', 'question': 'what is the biggest hotel in las vegas nv', 'agent': 'creative', 'gold_answer': '', 'agent_answer': 'mgm grand', 'confidence': 0.9, 'disagreement_type': 'strong'}
+
+Saved result files:
+results/situatedqa_temp_raw_summary_50.csv
+results/situatedqa_temp_raw_disagreement_summary_50.csv
+results/situatedqa_temp_raw_agent_summary_50.csv
+results/situatedqa_temp_raw_failed_majority_cases_50.jsonl
+results/situatedqa_temp_raw_overconfident_error_cases_50.jsonl

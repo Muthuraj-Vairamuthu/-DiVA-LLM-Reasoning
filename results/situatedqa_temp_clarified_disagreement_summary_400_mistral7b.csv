@@ -1,0 +1,5 @@
+disagreement_type,count,total,percentage,majority_correct,majority_accuracy
+none,54,400,0.135,31,0.5740740740740741
+weak,108,400,0.27,46,0.42592592592592593
+strong,182,400,0.455,46,0.25274725274725274
+complete,56,400,0.14,3,0.05357142857142857

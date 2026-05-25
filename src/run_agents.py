@@ -135,7 +135,7 @@ Do not write maybe, unknown, unclear, a number, or a full sentence in the Final 
 Do not put confidence or explanation inside the Final Answer field.
 """
 
-    if dataset_name in {"ambigqa", "condambigqa2k"}:
+    if dataset_name in {"ambigqa", "condambigqa2k", "situatedqa_temp_raw", "situatedqa_geo_raw"}:
         return """
 Dataset specific instruction:
 This is an ambiguity-sensitive open-domain question.
@@ -147,6 +147,20 @@ Your Final Answer must be exactly one of:
 1. a short answer phrase
 2. abstain
 
+Do not write a full sentence in the Final Answer field.
+Do not put confidence or explanation inside the Final Answer field.
+"""
+
+    if dataset_name in {"situatedqa_temp_clarified", "situatedqa_geo_clarified"}:
+        return """
+Dataset specific instruction:
+This is a short-answer question with the missing time or location context already provided.
+
+Your Final Answer must be exactly one of:
+1. a short answer phrase
+2. abstain
+
+Prefer a short factual answer when the question is answerable.
 Do not write a full sentence in the Final Answer field.
 Do not put confidence or explanation inside the Final Answer field.
 """
