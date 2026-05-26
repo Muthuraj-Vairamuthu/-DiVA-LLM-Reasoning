@@ -7,15 +7,18 @@ from pathlib import Path
 import os
 
 DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
+RUN_TAG = os.getenv("RUN_TAG", "").strip()
+output_suffix = f"_{RUN_TAG}" if RUN_TAG else ""
 
-INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_50.jsonl")
+INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_{SAMPLE_SIZE}{output_suffix}.jsonl")
 
 RESULTS_DIR = Path("results")
-SUMMARY_CSV = RESULTS_DIR / f"{DATASET_NAME}_summary.csv"
-DISAGREEMENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_disagreement_summary.csv"
-AGENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_agent_summary.csv"
-FAILED_MAJORITY_JSONL = RESULTS_DIR / f"{DATASET_NAME}_failed_majority_cases.jsonl"
-OVERCONFIDENT_ERRORS_JSONL = RESULTS_DIR / f"{DATASET_NAME}_overconfident_error_cases.jsonl"
+SUMMARY_CSV = RESULTS_DIR / f"{DATASET_NAME}_summary_{SAMPLE_SIZE}{output_suffix}.csv"
+DISAGREEMENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_disagreement_summary_{SAMPLE_SIZE}{output_suffix}.csv"
+AGENT_CSV = RESULTS_DIR / f"{DATASET_NAME}_agent_summary_{SAMPLE_SIZE}{output_suffix}.csv"
+FAILED_MAJORITY_JSONL = RESULTS_DIR / f"{DATASET_NAME}_failed_majority_cases_{SAMPLE_SIZE}{output_suffix}.jsonl"
+OVERCONFIDENT_ERRORS_JSONL = RESULTS_DIR / f"{DATASET_NAME}_overconfident_error_cases_{SAMPLE_SIZE}{output_suffix}.jsonl"
 
 AGENTS = ["literal", "skeptic", "creative", "evidence"]
 PRIORITY_AGENTS = ["evidence", "literal", "creative", "skeptic"]
@@ -171,7 +174,14 @@ def extract_gold_answer(gold_text):
 
 
 def get_gold_spec(row):
-    if row.get("dataset") == "ambigqa":
+    if row.get("dataset") in {
+        "ambigqa",
+        "condambigqa2k",
+        "situatedqa_temp_raw",
+        "situatedqa_temp_clarified",
+        "situatedqa_geo_raw",
+        "situatedqa_geo_clarified",
+    }:
         extracted = extract_gold_answer(row.get("gold_answer"))
         is_ambiguous = bool(row.get("is_ambiguous", False))
 
@@ -202,7 +212,27 @@ def get_gold_spec(row):
     return gold_answer, [gold_answer] if gold_answer != "" else [], False
 
 
-def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous):
+def get_eval_mode(dataset_name):
+    if dataset_name == "condambigqa2k":
+        return "abstention_only"
+
+    if dataset_name in {"situatedqa_temp_raw", "situatedqa_geo_raw"}:
+        return "abstention_only"
+
+    if dataset_name == "ambigqa":
+        return "mixed_ambiguity"
+
+    return "answer_accuracy"
+
+
+def should_include_abstentions_in_majority(dataset_name):
+    return get_eval_mode(dataset_name) == "abstention_only"
+
+
+def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous, eval_mode):
+    if eval_mode == "abstention_only":
+        return answer == ""
+
     if is_ambiguous:
         return answer == ""
 
@@ -231,16 +261,7 @@ def classify_disagreement(answer_counts):
 
 
 def get_majority_answer(answers):
-    non_empty_answers = {
-        agent: answer
-        for agent, answer in answers.items()
-        if answer != ""
-    }
-
-    if non_empty_answers:
-        counts = Counter(non_empty_answers.values())
-    else:
-        counts = Counter(answers.values())
+    counts = Counter(answers.values())
 
     max_count = max(counts.values())
 
@@ -258,6 +279,22 @@ def get_majority_answer(answers):
             return answers[agent], max_count
 
     return candidates[0], max_count
+
+
+def get_majority_answer_for_mode(answers, dataset_name):
+    if should_include_abstentions_in_majority(dataset_name):
+        return get_majority_answer(answers)
+
+    non_empty_answers = {
+        agent: answer
+        for agent, answer in answers.items()
+        if answer != ""
+    }
+
+    if non_empty_answers:
+        return get_majority_answer(non_empty_answers)
+
+    return get_majority_answer(answers)
 
 
 def safe_confidence(value):
@@ -328,6 +365,8 @@ def main():
     overconfident_error_cases = []
 
     for row in rows:
+        dataset_name = row.get("dataset", DATASET_NAME)
+        eval_mode = get_eval_mode(dataset_name)
         gold_answer, acceptable_answers, is_ambiguous = get_gold_spec(row)
 
         if is_ambiguous:
@@ -344,7 +383,10 @@ def main():
             confidences[agent] = safe_confidence(agent_data.get("confidence"))
 
         answer_counts = Counter(answers.values())
-        majority_answer, majority_count = get_majority_answer(answers)
+        majority_answer, majority_count = get_majority_answer_for_mode(
+            answers,
+            dataset_name
+        )
 
         disagreement_type = classify_disagreement(answer_counts)
         disagreement_counts[disagreement_type] += 1
@@ -353,7 +395,8 @@ def main():
             majority_answer,
             gold_answer,
             acceptable_answers,
-            is_ambiguous
+            is_ambiguous,
+            eval_mode
         )
 
         if is_majority_correct:
@@ -376,22 +419,23 @@ def main():
         any_agent_correct = False
 
         for agent in AGENTS:
-            if answers[agent] == "":
-                agent_abstained[agent] += 1
-
-                if is_ambiguous:
-                    correct_abstentions += 1
-                else:
-                    wrong_abstentions += 1
-                continue
-
             is_correct = is_correct_answer(
                 answers[agent],
                 gold_answer,
                 acceptable_answers,
-                is_ambiguous
+                is_ambiguous,
+                eval_mode
             )
             confidence = confidences[agent]
+
+            if answers[agent] == "":
+                agent_abstained[agent] += 1
+
+                if eval_mode == "mixed_ambiguity" and is_ambiguous:
+                    correct_abstentions += 1
+                elif eval_mode == "mixed_ambiguity":
+                    wrong_abstentions += 1
+            
 
             if is_correct:
                 agent_correct[agent] += 1
@@ -490,14 +534,28 @@ def main():
         f"oracle: {oracle_correct}/{total} = "
         f"{oracle_correct / total:.2%}"
     )
-    print("Oracle means at least one agent had the correct answer.")
+    if DATASET_NAME in {"condambigqa2k", "situatedqa_temp_raw", "situatedqa_geo_raw"}:
+        print("Oracle means at least one agent abstained, which is treated as the correct behavior for this ambiguity-detection setup.")
+    else:
+        print("Oracle means at least one agent had the correct answer.")
 
-    if DATASET_NAME == "ambigqa":
+    if DATASET_NAME in {
+        "ambigqa",
+        "condambigqa2k",
+        "situatedqa_temp_raw",
+        "situatedqa_temp_clarified",
+        "situatedqa_geo_raw",
+        "situatedqa_geo_clarified",
+    }:
         print("\nAmbiguity Breakdown")
         print(f"Ambiguous questions: {ambiguous_total}/{total} = {ambiguous_total / total:.2%}")
         print(f"Answerable questions: {answerable_total}/{total} = {answerable_total / total:.2%}")
-        print(f"Correct abstentions: {correct_abstentions}")
-        print(f"Wrong abstentions: {wrong_abstentions}")
+        if DATASET_NAME in {"condambigqa2k", "situatedqa_temp_raw", "situatedqa_geo_raw"}:
+            print("Correct abstentions: NA at the system level here; use diva.py output for final abstention metrics.")
+            print("Wrong abstentions: NA because this dataset is treated as fully ambiguous in the current setup.")
+        else:
+            print(f"Correct abstentions: {correct_abstentions}")
+            print(f"Wrong abstentions: {wrong_abstentions}")
 
     print("\nDisagreement Counts")
     for dtype in ["none", "weak", "strong", "complete"]:
@@ -634,6 +692,7 @@ def main():
         writer.writerow(["metric", "value"])
 
         writer.writerow(["total_samples", total])
+        writer.writerow(["evaluation_mode", get_eval_mode(DATASET_NAME)])
         writer.writerow(["majority_correct", majority_correct])
         writer.writerow(["majority_accuracy", majority_correct / total])
         writer.writerow(["oracle_correct", oracle_correct])
@@ -644,6 +703,15 @@ def main():
             writer.writerow(["answerable_total", answerable_total])
             writer.writerow(["correct_abstentions", correct_abstentions])
             writer.writerow(["wrong_abstentions", wrong_abstentions])
+        elif DATASET_NAME in {
+            "condambigqa2k",
+            "situatedqa_temp_raw",
+            "situatedqa_temp_clarified",
+            "situatedqa_geo_raw",
+            "situatedqa_geo_clarified",
+        }:
+            writer.writerow(["ambiguous_total", ambiguous_total])
+            writer.writerow(["answerable_total", answerable_total])
 
         for agent in AGENTS:
             writer.writerow([f"{agent}_correct", agent_correct[agent]])

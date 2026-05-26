@@ -3,7 +3,8 @@ import re
 from collections import Counter
 from pathlib import Path
 import os
-from llm_clients import NIMClient
+import csv
+from llm_clients import get_llm_client
 try:
     from dotenv import load_dotenv
 except ImportError:
@@ -13,9 +14,17 @@ if load_dotenv is not None:
     load_dotenv()
 
 DATASET_NAME = os.getenv("DATASET_NAME", "gsm8k")
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
+DISABLE_META_JUDGE = os.getenv("DISABLE_META_JUDGE", "0") == "1"
+RUN_TAG = os.getenv("RUN_TAG", "").strip()
+AGENT_RUN_TAG = os.getenv("AGENT_RUN_TAG", RUN_TAG).strip()
+DIVA_POLICY = os.getenv("DIVA_POLICY", "balanced").strip().lower()
 
-INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_50.jsonl")
-OUTPUT_PATH = Path(f"outputs/{DATASET_NAME}_diva_50.jsonl")
+input_suffix = f"_{AGENT_RUN_TAG}" if AGENT_RUN_TAG else ""
+output_suffix = f"_{RUN_TAG}" if RUN_TAG else ""
+INPUT_PATH = Path(f"outputs/{DATASET_NAME}_agents_{SAMPLE_SIZE}{input_suffix}.jsonl")
+OUTPUT_PATH = Path(f"outputs/{DATASET_NAME}_diva_{SAMPLE_SIZE}{output_suffix}.jsonl")
+SUMMARY_PATH = Path(f"results/{DATASET_NAME}_diva_summary_{SAMPLE_SIZE}{output_suffix}.csv")
 META_JUDGE_PROMPT_PATH = Path("prompts/meta_judge.txt")
 STRATEGYQA_META_JUDGE_PROMPT_PATH = Path("prompts/meta_judge_strategyqa.txt")
 MODEL_NAME = os.getenv("MODEL_NAME", "meta/llama-3.1-8b-instruct")
@@ -70,6 +79,13 @@ OPERATIONAL_REQUIREMENT_MARKERS = [
     "software that relies on electricity",
     "requires using the software"
 ]
+VALID_DIVA_POLICIES = {"lenient", "balanced", "strict"}
+
+if DIVA_POLICY not in VALID_DIVA_POLICIES:
+    raise ValueError(
+        f"Unsupported DIVA_POLICY={DIVA_POLICY!r}. "
+        f"Expected one of {sorted(VALID_DIVA_POLICIES)}."
+    )
 
 
 def is_abstention_text(text):
@@ -187,7 +203,14 @@ def extract_gold_answer(gold_text):
 
 
 def get_gold_spec(row):
-    if row.get("dataset") == "ambigqa":
+    if row.get("dataset") in {
+        "ambigqa",
+        "condambigqa2k",
+        "situatedqa_temp_raw",
+        "situatedqa_temp_clarified",
+        "situatedqa_geo_raw",
+        "situatedqa_geo_clarified",
+    }:
         extracted = extract_gold_answer(row.get("gold_answer"))
         is_ambiguous = bool(row.get("is_ambiguous", False))
 
@@ -218,7 +241,27 @@ def get_gold_spec(row):
     return gold_answer, [gold_answer] if gold_answer != "" else [], False
 
 
-def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous):
+def get_eval_mode(dataset_name):
+    if dataset_name == "condambigqa2k":
+        return "abstention_only"
+
+    if dataset_name in {"situatedqa_temp_raw", "situatedqa_geo_raw"}:
+        return "abstention_only"
+
+    if dataset_name == "ambigqa":
+        return "mixed_ambiguity"
+
+    return "answer_accuracy"
+
+
+def should_include_abstentions_in_majority(dataset_name):
+    return get_eval_mode(dataset_name) == "abstention_only"
+
+
+def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous, eval_mode):
+    if eval_mode == "abstention_only":
+        return answer == ""
+
     if is_ambiguous:
         return answer == ""
 
@@ -229,6 +272,22 @@ def is_correct_answer(answer, gold_answer, acceptable_answers, is_ambiguous):
         return answer in acceptable_answers
 
     return answer == gold_answer
+
+
+def get_majority_answer_for_mode(answers, dataset_name):
+    if should_include_abstentions_in_majority(dataset_name):
+        return get_majority_answer(answers)
+
+    non_empty_answers = {
+        agent: answer
+        for agent, answer in answers.items()
+        if answer != ""
+    }
+
+    if non_empty_answers:
+        return get_majority_answer(non_empty_answers)
+
+    return get_majority_answer(answers)
 
 
 def classify_disagreement(answer_counts):
@@ -360,7 +419,7 @@ def call_meta_judge(question, agent_responses):
 
     if client is None:
         try:
-            client = NIMClient(
+            client = get_llm_client(
                 model=MODEL_NAME,
                 temperature=0.1,
                 max_tokens=512
@@ -431,11 +490,116 @@ Evidence Agent Response:
         "selected_source": judge_output.get("selected_source", "")
     }
 
+
+def fallback_complete_disagreement_decision(answers, confidences):
+    for agent in ["evidence", "literal", "creative", "skeptic"]:
+        answer = answers.get(agent, "")
+        if answer != "":
+            return {
+                "selected_answer": answer,
+                "abstain": False,
+                "confidence": safe_confidence(confidences.get(agent, 0.4)),
+                "disagreement_type": "complete",
+                "strategy": "complete_disagreement_priority_fallback",
+                "reason": (
+                    "Meta Judge is disabled or unavailable, so DiVA falls back to a "
+                    "priority agent selection on complete disagreement."
+                ),
+                "selected_source": agent
+            }
+
+    return {
+        "selected_answer": "",
+        "abstain": True,
+        "confidence": 0.0,
+        "disagreement_type": "complete",
+        "strategy": "complete_disagreement_abstain_fallback",
+        "reason": (
+            "Meta Judge is disabled or unavailable and no non-abstaining agent answer "
+            "is available, so DiVA abstains."
+        ),
+        "selected_source": "abstain"
+    }
+
+
+def ambiguity_policy_should_abstain(disagreement, abstaining_agents):
+    abstain_count = len(abstaining_agents)
+    abstain_set = set(abstaining_agents)
+
+    if DIVA_POLICY == "lenient":
+        if {"evidence", "skeptic"}.issubset(abstain_set):
+            return True, 0.25, "lenient_grounded_pair_abstention"
+        if abstain_count >= 3:
+            return True, 0.20, "lenient_three_agent_abstention"
+        if disagreement == "complete":
+            return True, 0.30, "lenient_complete_disagreement"
+        return False, None, None
+
+    if DIVA_POLICY == "strict":
+        if abstain_count >= 1:
+            return True, 0.20, "strict_any_agent_abstention"
+        if disagreement in {"weak", "strong", "complete"}:
+            return True, 0.25, "strict_any_disagreement"
+        return False, None, None
+
+    if abstain_count >= 2:
+        return True, 0.25, "balanced_multiple_agent_abstentions"
+    if "evidence" in abstain_set and disagreement != "none":
+        return True, 0.25, "balanced_evidence_abstention"
+    if {"evidence", "skeptic"}.issubset(abstain_set):
+        return True, 0.20, "balanced_grounded_pair_abstention"
+    if disagreement in {"strong", "complete"}:
+        return True, 0.30, "balanced_high_disagreement"
+
+    return False, None, None
+
+
+def ambiguity_policy_reason(strategy, abstaining_agents):
+    grounded_agents = ",".join(abstaining_agents) if abstaining_agents else "abstain"
+
+    reasons = {
+        "lenient_grounded_pair_abstention": (
+            "Both grounded agents abstain, so even the lenient policy treats the question as underspecified."
+        ),
+        "lenient_three_agent_abstention": (
+            "Three agents abstain, so the lenient policy abstains despite preferring coverage."
+        ),
+        "lenient_complete_disagreement": (
+            "Under the lenient policy, only complete disagreement is strong enough to trigger abstention."
+        ),
+        "strict_any_agent_abstention": (
+            "Under the strict policy, any abstaining agent is enough to trigger abstention."
+        ),
+        "strict_any_disagreement": (
+            "Under the strict policy, any non-unanimous disagreement is treated as a reason to abstain."
+        ),
+        "balanced_multiple_agent_abstentions": (
+            "Multiple agents abstain, so the balanced policy treats the question as too underspecified to answer."
+        ),
+        "balanced_evidence_abstention": (
+            "The evidence agent abstains under disagreement, so the balanced policy treats the question as underspecified."
+        ),
+        "balanced_grounded_pair_abstention": (
+            "Both grounded agents abstain, so the balanced policy strongly prefers abstention."
+        ),
+        "balanced_high_disagreement": (
+            "High disagreement on an ambiguity-sensitive dataset is treated as a signal to abstain."
+        ),
+    }
+
+    return reasons.get(strategy, "DiVA abstains under the selected ambiguity policy."), grounded_agents
+
+
 def diva_decision(question, answers, confidences, agent_responses):
     counts = Counter(answers.values())
     disagreement = classify_disagreement(counts)
 
     majority_answer, majority_count = get_majority_answer(answers)
+    abstaining_agents = [
+        agent
+        for agent, answer in answers.items()
+        if answer == ""
+    ]
 
     decision = {
         "selected_answer": None,
@@ -455,22 +619,28 @@ def diva_decision(question, answers, confidences, agent_responses):
         decision["reason"] = "All agents agree, so the answer is treated as reliable."
         return decision
 
-    if DATASET_NAME == "ambigqa":
-        abstaining_agents = [
-            agent
-            for agent, answer in answers.items()
-            if answer == ""
-        ]
+    if DATASET_NAME in {
+        "ambigqa",
+        "condambigqa2k",
+        "situatedqa_temp_raw",
+        "situatedqa_geo_raw",
+    }:
+        should_abstain, policy_confidence, policy_strategy = ambiguity_policy_should_abstain(
+            disagreement,
+            abstaining_agents
+        )
 
-        if disagreement in {"strong", "complete"}:
+        if should_abstain:
+            reason, selected_source = ambiguity_policy_reason(
+                policy_strategy,
+                abstaining_agents
+            )
             decision["selected_answer"] = ""
             decision["abstain"] = True
-            decision["confidence"] = 0.30
-            decision["strategy"] = "ambigqa_abstain_on_high_disagreement"
-            decision["selected_source"] = "abstain"
-            decision["reason"] = (
-                "High disagreement on an ambiguity-sensitive dataset is treated as a signal to abstain."
-            )
+            decision["confidence"] = policy_confidence
+            decision["strategy"] = policy_strategy
+            decision["selected_source"] = selected_source
+            decision["reason"] = reason
             return decision
 
         if disagreement == "weak":
@@ -494,6 +664,46 @@ def diva_decision(question, answers, confidences, agent_responses):
                     decision["selected_source"] = agent
                     decision["reason"] = (
                         "A grounded agent flags the question as underspecified, so DiVA abstains."
+                    )
+                    return decision
+
+    if DATASET_NAME in {"situatedqa_temp_clarified", "situatedqa_geo_clarified"}:
+        if answers.get("literal") != "" and answers.get("literal") == answers.get("evidence"):
+            decision["selected_answer"] = answers["literal"]
+            decision["confidence"] = 0.90
+            decision["strategy"] = "clarified_literal_evidence_agreement"
+            decision["selected_source"] = "literal,evidence"
+            decision["reason"] = (
+                "The direct and grounded agents agree on the clarified question, so their shared answer is preferred."
+            )
+            return decision
+
+        non_empty_answers = [
+            answer
+            for answer in answers.values()
+            if answer != ""
+        ]
+
+        if not non_empty_answers:
+            decision["selected_answer"] = ""
+            decision["abstain"] = True
+            decision["confidence"] = 0.0
+            decision["strategy"] = "clarified_all_abstain_fallback"
+            decision["selected_source"] = "abstain"
+            decision["reason"] = (
+                "All agents abstained even after clarification, so DiVA abstains as a fallback."
+            )
+            return decision
+
+        if disagreement == "complete":
+            for agent in ["literal", "evidence", "creative", "skeptic"]:
+                if answers.get(agent) != "":
+                    decision["selected_answer"] = answers[agent]
+                    decision["confidence"] = safe_confidence(confidences.get(agent, 0.55))
+                    decision["strategy"] = "clarified_priority_fallback_on_complete"
+                    decision["selected_source"] = agent
+                    decision["reason"] = (
+                        "On clarified questions, DiVA prefers answering over abstaining under complete disagreement."
                     )
                     return decision
 
@@ -634,6 +844,9 @@ def diva_decision(question, answers, confidences, agent_responses):
         return decision
 
     if disagreement == "complete":
+        if DISABLE_META_JUDGE:
+            return fallback_complete_disagreement_decision(answers, confidences)
+
         judge_decision = call_meta_judge(
             question=question,
             agent_responses=agent_responses
@@ -680,6 +893,8 @@ def main():
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as output_file:
         for row in rows:
+            dataset_name = row.get("dataset", DATASET_NAME)
+            eval_mode = get_eval_mode(dataset_name)
             gold_answer, acceptable_answers, is_ambiguous = get_gold_spec(row)
 
             if is_ambiguous:
@@ -697,12 +912,16 @@ def main():
                 confidences[agent] = safe_confidence(agent_data.get("confidence"))
                 agent_responses[agent] = agent_data.get("response", "")
 
-            majority_answer, majority_count = get_majority_answer(answers)
+            majority_answer, majority_count = get_majority_answer_for_mode(
+                answers,
+                dataset_name
+            )
             majority_is_correct = is_correct_answer(
                 majority_answer,
                 gold_answer,
                 acceptable_answers,
-                is_ambiguous
+                is_ambiguous,
+                eval_mode
             )
 
             if majority_is_correct:
@@ -719,7 +938,8 @@ def main():
                 selected_answer,
                 gold_answer,
                 acceptable_answers,
-                is_ambiguous
+                is_ambiguous,
+                eval_mode
             )
 
             if decision["abstain"]:
@@ -794,6 +1014,7 @@ def main():
 
     print(f"Input file: {INPUT_PATH}")
     print(f"Output file: {OUTPUT_PATH}")
+    print(f"Policy: {DIVA_POLICY}")
     print(f"Total samples: {total}")
 
     print("\nMajority Baseline")
@@ -802,16 +1023,29 @@ def main():
     print("\nDiVA Results")
     print(f"Answered: {diva_answered}/{total} = {diva_coverage:.2%}")
     print(f"Abstained: {diva_abstained}/{total} = {diva_abstention_rate:.2%}")
-    print(f"Selective accuracy on answered samples: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
+    if DATASET_NAME == "condambigqa2k":
+        print("Selective accuracy on answered samples: NA (short-answer exact match is unsupported for CondAmbigQA-2K)")
+    else:
+        print(f"Selective accuracy on answered samples: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
     print(f"Accuracy if abstentions are counted as wrong: {diva_correct_total_style}/{total} = {diva_total_accuracy_counting_abstain_wrong:.2%}")
 
-    if DATASET_NAME == "ambigqa":
+    if DATASET_NAME in {
+        "ambigqa",
+        "condambigqa2k",
+        "situatedqa_temp_raw",
+        "situatedqa_temp_clarified",
+        "situatedqa_geo_raw",
+        "situatedqa_geo_clarified",
+    }:
         print("\nAmbiguity Metrics")
         print(f"Ambiguous questions: {ambiguous_total}/{total} = {ambiguous_total / total:.2%}")
         print(f"Answerable questions: {answerable_total}/{total} = {answerable_total / total:.2%}")
         print(f"Correct abstentions: {diva_correct_abstentions}/{ambiguous_total} = {diva_correct_abstention_rate:.2%}")
         print(f"Wrong abstentions: {diva_wrong_abstentions}/{answerable_total} = {diva_wrong_abstention_rate:.2%}")
-        print(f"Answered accuracy: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
+        if DATASET_NAME in {"condambigqa2k", "situatedqa_temp_raw", "situatedqa_geo_raw"}:
+            print("Answered accuracy: NA (dataset is evaluated as ambiguity detection / abstention only)")
+        else:
+            print(f"Answered accuracy: {diva_correct_answered}/{diva_answered} = {diva_selective_accuracy:.2%}")
         print(f"Coverage: {diva_answered}/{total} = {diva_coverage:.2%}")
         print(f"Ambiguity-aware accuracy: {diva_correct_total_style}/{total} = {diva_ambiguity_aware_accuracy:.2%}")
 
@@ -820,9 +1054,45 @@ def main():
     print(f"Abstained when majority was correct: {abstained_on_majority_correct}")
 
     print("\nInterpretation")
-    print("Majority accuracy measures raw answer accuracy.")
-    print("DiVA selective accuracy measures accuracy only when DiVA chooses to answer.")
-    print("A good abstention method should avoid difficult cases where majority is likely wrong.")
+    if DATASET_NAME in {"condambigqa2k", "situatedqa_temp_raw", "situatedqa_geo_raw"}:
+        print(f"{DATASET_NAME} is evaluated as an ambiguity-detection dataset in this pipeline.")
+        if DATASET_NAME == "condambigqa2k":
+            print("A correct outcome is to abstain, because the gold targets are long condition-specific explanations rather than short exact-match answers.")
+        else:
+            print("A correct outcome is to abstain, because the raw question is intentionally missing the disambiguating time or location context.")
+        print("Coverage shows how often DiVA chose to answer instead of abstaining.")
+    else:
+        print("Majority accuracy measures raw answer accuracy.")
+        print("DiVA selective accuracy measures accuracy only when DiVA chooses to answer.")
+        print("A good abstention method should avoid difficult cases where majority is likely wrong.")
+
+    SUMMARY_PATH.parent.mkdir(exist_ok=True)
+    with open(SUMMARY_PATH, "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["metric", "value"])
+        writer.writerow(["dataset", DATASET_NAME])
+        writer.writerow(["sample_size", SAMPLE_SIZE])
+        writer.writerow(["run_tag", RUN_TAG])
+        writer.writerow(["diva_policy", DIVA_POLICY])
+        writer.writerow(["total_samples", total])
+        writer.writerow(["majority_correct", majority_correct])
+        writer.writerow(["majority_accuracy", majority_accuracy])
+        writer.writerow(["diva_answered", diva_answered])
+        writer.writerow(["diva_abstained", diva_abstained])
+        writer.writerow(["diva_coverage", diva_coverage])
+        writer.writerow(["diva_abstention_rate", diva_abstention_rate])
+        writer.writerow(["diva_correct_answered", diva_correct_answered])
+        writer.writerow(["diva_selective_accuracy", diva_selective_accuracy])
+        writer.writerow(["diva_accuracy_abstentions_wrong", diva_total_accuracy_counting_abstain_wrong])
+        writer.writerow(["ambiguous_total", ambiguous_total])
+        writer.writerow(["answerable_total", answerable_total])
+        writer.writerow(["diva_correct_abstentions", diva_correct_abstentions])
+        writer.writerow(["diva_wrong_abstentions", diva_wrong_abstentions])
+        writer.writerow(["diva_correct_abstention_rate", diva_correct_abstention_rate])
+        writer.writerow(["diva_wrong_abstention_rate", diva_wrong_abstention_rate])
+        writer.writerow(["diva_ambiguity_aware_accuracy", diva_ambiguity_aware_accuracy])
+        writer.writerow(["abstained_on_majority_wrong", abstained_on_majority_wrong])
+        writer.writerow(["abstained_on_majority_correct", abstained_on_majority_correct])
 
 
 if __name__ == "__main__":

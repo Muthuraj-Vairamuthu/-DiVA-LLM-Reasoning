@@ -4,9 +4,13 @@ import os
 
 os.makedirs("data", exist_ok=True)
 
-dataset = load_dataset("ChilleD/StrategyQA", split="train[:50]")
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 
-with open("data/strategyqa_50.jsonl", "w", encoding="utf-8") as f:
+dataset = load_dataset("ChilleD/StrategyQA", split=f"train[:{SAMPLE_SIZE}]")
+
+output_path = f"data/strategyqa_{SAMPLE_SIZE}.jsonl"
+
+with open(output_path, "w", encoding="utf-8") as f:
     for i, row in enumerate(dataset):
         sample = {
             "id": f"strategyqa_{i}",
@@ -19,4 +23,4 @@ with open("data/strategyqa_50.jsonl", "w", encoding="utf-8") as f:
 
         f.write(json.dumps(sample, ensure_ascii=False) + "\n")
 
-print("Saved 50 StrategyQA samples to data/strategyqa_50.jsonl")
+print(f"Saved {SAMPLE_SIZE} StrategyQA samples to {output_path}")

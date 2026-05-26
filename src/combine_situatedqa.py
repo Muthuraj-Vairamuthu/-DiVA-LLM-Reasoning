@@ -8,9 +8,11 @@ from pathlib import Path
 
 SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 RUN_TAG = os.getenv("RUN_TAG", "").strip()
+AGENT_RUN_TAG = os.getenv("AGENT_RUN_TAG", RUN_TAG).strip()
 SITUATEDQA_CONFIG = os.getenv("SITUATEDQA_CONFIG", "temp").strip().lower()
 
 output_suffix = f"_{RUN_TAG}" if RUN_TAG else ""
+agent_input_suffix = f"_{AGENT_RUN_TAG}" if AGENT_RUN_TAG else ""
 
 RAW_DATASET_NAME = f"situatedqa_{SITUATEDQA_CONFIG}_raw"
 CLARIFIED_DATASET_NAME = f"situatedqa_{SITUATEDQA_CONFIG}_clarified"
@@ -18,8 +20,8 @@ CLARIFIED_DATASET_NAME = f"situatedqa_{SITUATEDQA_CONFIG}_clarified"
 RAW_DIVA_PATH = Path(f"outputs/{RAW_DATASET_NAME}_diva_{SAMPLE_SIZE}{output_suffix}.jsonl")
 CLARIFIED_DIVA_PATH = Path(f"outputs/{CLARIFIED_DATASET_NAME}_diva_{SAMPLE_SIZE}{output_suffix}.jsonl")
 
-RAW_AGENTS_PATH = Path(f"outputs/{RAW_DATASET_NAME}_agents_{SAMPLE_SIZE}{output_suffix}.jsonl")
-CLARIFIED_AGENTS_PATH = Path(f"outputs/{CLARIFIED_DATASET_NAME}_agents_{SAMPLE_SIZE}{output_suffix}.jsonl")
+RAW_AGENTS_PATH = Path(f"outputs/{RAW_DATASET_NAME}_agents_{SAMPLE_SIZE}{agent_input_suffix}.jsonl")
+CLARIFIED_AGENTS_PATH = Path(f"outputs/{CLARIFIED_DATASET_NAME}_agents_{SAMPLE_SIZE}{agent_input_suffix}.jsonl")
 
 RESULTS_DIR = Path("results")
 RESULTS_DIR.mkdir(exist_ok=True)

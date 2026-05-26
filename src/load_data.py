@@ -4,9 +4,13 @@ import os
 
 os.makedirs("data", exist_ok=True)
 
-dataset = load_dataset("gsm8k", "main", split="train[:50]")
+SAMPLE_SIZE = int(os.getenv("SAMPLE_SIZE", "50"))
 
-with open("data/gsm8k_50.jsonl", "w") as f:
+dataset = load_dataset("openai/gsm8k", "main", split=f"train[:{SAMPLE_SIZE}]")
+
+output_path = f"data/gsm8k_{SAMPLE_SIZE}.jsonl"
+
+with open(output_path, "w") as f:
     for i, row in enumerate(dataset):
         sample = {
             "id": f"gsm8k_{i}",
@@ -15,4 +19,4 @@ with open("data/gsm8k_50.jsonl", "w") as f:
         }
         f.write(json.dumps(sample) + "\n")
 
-print("done")
+print(f"Saved {SAMPLE_SIZE} GSM8K samples to {output_path}")
