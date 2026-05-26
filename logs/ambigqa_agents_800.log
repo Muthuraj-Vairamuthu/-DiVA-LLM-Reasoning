@@ -1,0 +1,140 @@
+Starting run_agents for dataset=ambigqa, samples=800, model=meta/llama-3.1-8b-instruct
+Reading data from data/ambigqa_800.jsonl
+Writing outputs to outputs/ambigqa_agents_800.jsonl
+Loaded 800 samples
+Running sample 1/800: ambigqa_0
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 2/800: ambigqa_1
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 3/800: ambigqa_2
+Calling literal agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
+Rate limited. Retrying in 16 seconds.
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 4/800: ambigqa_3
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 5/800: ambigqa_4
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 6/800: ambigqa_5
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Calling evidence agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
+Rate limited. Retrying in 16 seconds.
+Running sample 7/800: ambigqa_6
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 8/800: ambigqa_7
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 9/800: ambigqa_8
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 10/800: ambigqa_9
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Rate limited. Retrying in 1 seconds.
+Running sample 11/800: ambigqa_10
+Calling literal agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
+Calling skeptic agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Calling creative agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
+Calling evidence agent
+Running sample 12/800: ambigqa_11
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 13/800: ambigqa_12
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 14/800: ambigqa_13
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 15/800: ambigqa_14
+Calling literal agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Calling skeptic agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
+Rate limited. Retrying in 16 seconds.
+Calling creative agent
+Calling evidence agent
+Running sample 16/800: ambigqa_15
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 17/800: ambigqa_16
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 18/800: ambigqa_17
+Calling literal agent
+Calling skeptic agent
+Calling creative agent
+Calling evidence agent
+Running sample 19/800: ambigqa_18
+Calling literal agent
+Calling skeptic agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Calling creative agent
+Calling evidence agent
+Rate limited. Retrying in 1 seconds.
+Running sample 20/800: ambigqa_19
+Calling literal agent
+Rate limited. Retrying in 1 seconds.
+Rate limited. Retrying in 2 seconds.
+Rate limited. Retrying in 4 seconds.
+Rate limited. Retrying in 8 seconds.
