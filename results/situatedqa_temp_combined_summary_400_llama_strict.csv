@@ -7,9 +7,9 @@ raw_majority_correct,16
 raw_majority_accuracy,0.04
 raw_oracle_correct,234
 raw_oracle_accuracy,0.585
-raw_diva_correct,303
-raw_diva_accuracy,0.7575
-raw_diva_abstention_rate,0.7175
+raw_diva_correct,346
+raw_diva_accuracy,0.865
+raw_diva_abstention_rate,0.825
 clarified_total,400
 clarified_majority_correct,135
 clarified_majority_accuracy,0.3375
@@ -22,5 +22,5 @@ combined_majority_correct,151
 combined_majority_accuracy,0.18875
 combined_oracle_correct,407
 combined_oracle_accuracy,0.50875
-combined_diva_correct,435
-combined_diva_accuracy,0.54375
+combined_diva_correct,478
+combined_diva_accuracy,0.5975
