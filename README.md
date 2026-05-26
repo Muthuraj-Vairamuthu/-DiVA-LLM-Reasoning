@@ -181,18 +181,6 @@ This gives a clean experimental setup for:
 - missing context -> abstain
 - added context -> answer
 
-### CondAmbigQA-2K
-
-This dataset currently works best as a **supporting ambiguity-recognition / abstention** dataset, because its gold answers are long condition-specific explanations rather than short exact-match answers.
-
-## Current Status
-
-This repo is an active research codebase and still evolving. The most important next steps are:
-
-- refining abstention-rate curves
-- comparing cross-model behavior
-- improving ambiguity-aware aggregation
-
 ## License
 
 This repository is for research use. Please check the original licenses of any datasets and models you use.
